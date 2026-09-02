@@ -18,11 +18,6 @@
                 </nav>
 
                 <div class="hero-text-block">
-                    <div class="hero-badge">
-                        <i data-lucide="shield-check" class="icon-sm"></i>
-                        <span>Data Terverifikasi BPS Kabupaten Bangka</span>
-                    </div>
-
                     <h1 class="hero-title">
                         Statistik Dasar
                         <span class="hero-highlight">Pemerintah Kabupaten Bangka</span>
@@ -35,7 +30,7 @@
 
                 <!-- Filter Controls -->
                 <div class="filter-toolbar">
-                    <!-- Filter Tahun -->
+                    <!-- Filter Tahun (5 Tahun Terakhir: 2024 - 2020) -->
                     <div class="filter-pill">
                         <i data-lucide="calendar" class="icon-sm text-primary"></i>
                         <span class="filter-label">Tahun:</span>
@@ -46,7 +41,7 @@
                         </select>
                     </div>
 
-                    <!-- Filter Wilayah -->
+                    <!-- Filter Wilayah (Kabupaten vs 8 Kecamatan) -->
                     <div class="filter-pill">
                         <i data-lucide="map-pin" class="icon-sm text-primary"></i>
                         <span class="filter-label">Wilayah:</span>
@@ -58,41 +53,47 @@
                         </select>
                     </div>
 
-                    <!-- Tombol Bagikan -->
-                    <button type="button" id="btn-share" class="btn-outline btn-pill">
-                        <i data-lucide="share-2" class="icon-sm"></i>
-                        <span id="share-text">Bagikan</span>
-                    </button>
-
                     <!-- Theme Toggle -->
                     <button type="button" id="btn-theme" class="btn-icon btn-pill" title="Ubah Mode Gelap / Terang">
                         <i data-lucide="moon" class="icon-sm" id="theme-icon"></i>
                     </button>
                 </div>
 
-                <!-- 4 Headline KPI Cards (BPS Official Data) -->
-                <div class="kpi-grid">
+                <!-- Info Banner Kecamatan Terpilih (Jika Kecamatan Dipilih) -->
+                <div id="active-wilayah-banner" class="active-wilayah-banner {{ $activeKecamatan ? '' : 'hidden' }}">
+                    <div class="active-wilayah-info">
+                        <i data-lucide="map-pin" class="icon-sm text-primary"></i>
+                        <span>Menampilkan Data Khusus: <strong id="active-wilayah-name">{{ $activeKecamatan['name'] ?? '' }}</strong> (Ibu Kota: <span id="active-wilayah-capital">{{ $activeKecamatan['capital'] ?? '' }}</span>, Luas: <span id="active-wilayah-area">{{ number_format($activeKecamatan['area_km2'] ?? 0, 2, ',', '.') }}</span> Km²)</span>
+                    </div>
+                    <button type="button" class="btn-reset-wilayah" onclick="resetToKabupaten()">
+                        <i data-lucide="rotate-ccw" class="icon-xs"></i>
+                        <span>Lihat Seluruh Kabupaten</span>
+                    </button>
+                </div>
+
+                <!-- 4 Headline KPI Cards (Dinamis: Agregat Kabupaten atau Spesifik Kecamatan Terpilih) -->
+                <div class="kpi-grid" id="kpi-grid-container">
                     @foreach($headlineIndicators as $ind)
                         @php
-                            $isGood = $ind['lower_is_better'] ? ($ind['yoy_change'] < 0) : ($ind['yoy_change'] > 0);
+                            $isGood = isset($ind['lower_is_better']) && $ind['lower_is_better'] ? ($ind['yoy_change'] < 0) : ($ind['yoy_change'] >= 0);
                         @endphp
                         <div class="kpi-card" data-indicator-id="{{ $ind['id'] }}">
                             <div class="kpi-header">
                                 <div class="kpi-title-wrap">
                                     <div class="kpi-icon-wrap">
-                                        @if($ind['id'] == 'ipm')
+                                        @if(str_contains($ind['id'], 'ipm') || str_contains($ind['id'], 'area'))
                                             <i data-lucide="graduation-cap" class="icon-md"></i>
-                                        @elseif($ind['id'] == 'kemiskinan')
+                                        @elseif(str_contains($ind['id'], 'kemiskinan') || str_contains($ind['id'], 'density'))
                                             <i data-lucide="trending-down" class="icon-md"></i>
-                                        @elseif($ind['id'] == 'pertumbuhan-ekonomi')
+                                        @elseif(str_contains($ind['id'], 'pertumbuhan') || str_contains($ind['id'], 'pdrb'))
                                             <i data-lucide="trending-up" class="icon-md"></i>
                                         @else
-                                            <i data-lucide="briefcase" class="icon-md"></i>
+                                            <i data-lucide="users" class="icon-md"></i>
                                         @endif
                                     </div>
                                     <div>
-                                        <h3 class="kpi-name">{{ $ind['short_name'] }}</h3>
-                                        <p class="kpi-sub">{{ $ind['metadata']['satuan'] }}</p>
+                                        <h3 class="kpi-name" id="kpi-name-{{ $ind['id'] }}">{{ $ind['short_name'] ?? $ind['name'] }}</h3>
+                                        <p class="kpi-sub" id="kpi-sub-{{ $ind['id'] }}">{{ $ind['metadata']['satuan'] ?? $ind['unit'] }}</p>
                                     </div>
                                 </div>
 
@@ -104,13 +105,13 @@
                             <div class="kpi-body">
                                 <div class="kpi-value-row">
                                     <span class="kpi-number font-mono" id="kpi-val-{{ $ind['id'] }}">
-                                        {{ number_format($ind['value'], 2, ',', '.') }}
+                                        {{ number_format($ind['value'], (isset($ind['unit']) && ($ind['unit'] == 'Poin' || $ind['unit'] == '%' || str_contains($ind['unit'], 'Juta')) ? 2 : 0), ',', '.') }}
                                     </span>
-                                    <span class="kpi-unit">{{ $ind['unit'] }}</span>
+                                    <span class="kpi-unit" id="kpi-unit-{{ $ind['id'] }}">{{ $ind['unit'] }}</span>
                                 </div>
 
                                 <div class="kpi-meta-row">
-                                    <span class="trend-badge {{ $isGood ? 'trend-positive' : 'trend-negative' }}">
+                                    <span class="trend-badge {{ $isGood ? 'trend-positive' : 'trend-negative' }}" id="kpi-badge-{{ $ind['id'] }}">
                                         <i data-lucide="{{ $ind['yoy_change'] < 0 ? 'arrow-down-right' : 'arrow-up-right' }}" class="icon-xs"></i>
                                         {{ $ind['yoy_change'] > 0 ? '+' : '' }}{{ number_format($ind['yoy_change'], 2, ',', '.') }}% YoY
                                     </span>
@@ -143,20 +144,34 @@
                     </p>
                 </div>
 
-                <!-- Mode Switcher (Area / Line / Bar) -->
-                <div class="chart-mode-group">
-                    <button type="button" class="chart-mode-btn active" data-mode="area" title="Mode Grafik Area">
-                        <i data-lucide="layers" class="icon-sm"></i>
-                        <span>Area</span>
-                    </button>
-                    <button type="button" class="chart-mode-btn" data-mode="line" title="Mode Grafik Garis">
-                        <i data-lucide="activity" class="icon-sm"></i>
-                        <span>Garis</span>
-                    </button>
-                    <button type="button" class="chart-mode-btn" data-mode="bar" title="Mode Grafik Batang">
-                        <i data-lucide="bar-chart-3" class="icon-sm"></i>
-                        <span>Batang</span>
-                    </button>
+                <div class="chart-controls-wrap">
+                    <!-- Urutan Tahun Toggle: Terbaru vs Kronologis -->
+                    <div class="chart-order-toggle">
+                        <button type="button" class="order-btn active" id="btn-order-desc" onclick="setChartTimeOrder('desc')" title="Mulai dari Tahun Terbaru (2024 → 2020)">
+                            <i data-lucide="arrow-down-narrow-wide" class="icon-xs"></i>
+                            <span>Terbaru (2024 &rarr; 2020)</span>
+                        </button>
+                        <button type="button" class="order-btn" id="btn-order-asc" onclick="setChartTimeOrder('asc')" title="Kronologis (2020 → 2024)">
+                            <i data-lucide="arrow-up-narrow-wide" class="icon-xs"></i>
+                            <span>Kronologis (2020 &rarr; 2024)</span>
+                        </button>
+                    </div>
+
+                    <!-- Mode Switcher (Area / Line / Bar) -->
+                    <div class="chart-mode-group">
+                        <button type="button" class="chart-mode-btn active" data-mode="area" title="Mode Grafik Area">
+                            <i data-lucide="layers" class="icon-sm"></i>
+                            <span>Area</span>
+                        </button>
+                        <button type="button" class="chart-mode-btn" data-mode="line" title="Mode Grafik Garis">
+                            <i data-lucide="activity" class="icon-sm"></i>
+                            <span>Garis</span>
+                        </button>
+                        <button type="button" class="chart-mode-btn" data-mode="bar" title="Mode Grafik Batang">
+                            <i data-lucide="bar-chart-3" class="icon-sm"></i>
+                            <span>Batang</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -181,7 +196,8 @@
                             <h3 class="chart-title" id="chart-indicator-name">{{ $currentSector['name'] }}</h3>
                             <p class="chart-subtitle">
                                 Produsen: <span id="chart-producer" class="font-medium text-foreground">{{ $currentSector['metadata']['produsen'] }}</span> &middot;
-                                Satuan: <span id="chart-unit" class="font-semibold text-primary">{{ $currentSector['unit'] }}</span>
+                                Satuan: <span id="chart-unit" class="font-semibold text-primary">{{ $currentSector['unit'] }}</span> &middot;
+                                Wilayah: <span id="chart-wilayah-name" class="font-semibold text-foreground">{{ $activeKecamatan ? 'Kec. ' . $activeKecamatan['name'] : 'Kabupaten Bangka' }}</span>
                             </p>
                         </div>
                     </div>
@@ -206,11 +222,7 @@
                 <div class="analysis-box">
                     <i data-lucide="sparkles" class="icon-sm text-primary"></i>
                     <p class="analysis-text" id="chart-analysis-text">
-                        <strong>Analisis Tren:</strong> Indikator <strong>{{ $currentSector['name'] }}</strong> mengalami perubahan 
-                        <strong class="{{ $currentSector['yoy_change'] >= 0 ? 'text-emerald-600' : 'text-rose-600' }}">
-                            {{ $currentSector['yoy_change'] > 0 ? '+' : '' }}{{ number_format($currentSector['yoy_change'], 2, ',', '.') }}%
-                        </strong> 
-                        secara tahunan dengan rujukan resmi {{ $currentSector['metadata']['produsen'] }}.
+                        <strong>Analisis Tren:</strong> Indikator <strong>{{ $currentSector['name'] }}</strong> {{ $activeKecamatan ? 'di Kecamatan ' . $activeKecamatan['name'] : 'di Kabupaten Bangka' }} tercatat sebesar <strong>{{ number_format($currentSector['value'], $currentSector['column']['digits'] ?? 2, ',', '.') }} {{ $currentSector['unit'] }}</strong> pada tahun {{ $selectedYear }} dengan rujukan resmi {{ $currentSector['metadata']['produsen'] }}.
                     </p>
                 </div>
             </div>
@@ -278,13 +290,19 @@
                             @foreach($kecamatanList as $idx => $k)
                                 @php
                                     $proportion = min(100, ($k['current_value'] / $maxVal) * 100);
+                                    $isSelected = ($selectedWilayah == $k['id']);
                                 @endphp
-                                <tr data-kecamatan-id="{{ $k['id'] }}" data-name="{{ strtolower($k['name']) }}" data-capital="{{ strtolower($k['capital']) }}" data-value="{{ $k['current_value'] }}">
+                                <tr data-kecamatan-id="{{ $k['id'] }}" data-name="{{ strtolower($k['name']) }}" data-capital="{{ strtolower($k['capital']) }}" data-value="{{ $k['current_value'] }}" class="{{ $isSelected ? 'row-selected-highlight' : '' }}">
                                     <td class="td-center font-mono td-rank-val">{{ $idx + 1 }}</td>
                                     <td class="td-name">
                                         <div class="kecamatan-identity">
-                                            <span class="kecamatan-badge">{{ strtoupper(substr($k['name'], 0, 2)) }}</span>
-                                            <span class="font-semibold text-foreground">Kecamatan {{ $k['name'] }}</span>
+                                            <span class="kecamatan-badge {{ $isSelected ? 'badge-active' : '' }}">{{ strtoupper(substr($k['name'], 0, 2)) }}</span>
+                                            <div class="kecamatan-name-stack">
+                                                <span class="font-semibold text-foreground">Kecamatan {{ $k['name'] }}</span>
+                                                @if($isSelected)
+                                                    <span class="badge-fokus-wilayah">Wilayah Terpilih</span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </td>
                                     <td class="td-center text-muted-foreground">{{ $k['capital'] }}</td>
@@ -295,7 +313,7 @@
                                     <td class="td-bar">
                                         <div class="proportion-bar-wrap">
                                             <div class="proportion-bar-track">
-                                                <div class="proportion-bar-fill" style="width: {{ $proportion }}%"></div>
+                                                <div class="proportion-bar-fill {{ $isSelected ? 'fill-active' : '' }}" style="width: {{ $proportion }}%"></div>
                                             </div>
                                             <span class="proportion-pct font-mono">{{ round($proportion) }}%</span>
                                         </div>
@@ -413,7 +431,7 @@
                 </div>
 
                 <div class="detail-box">
-                    <span class="detail-box-label">Data Historis 5 Tahun (2020–2024)</span>
+                    <span class="detail-box-label">Data Historis 5 Tahun Terakhir (2024–2020)</span>
                     <div class="history-grid" id="modal-history-grid">
                         <!-- Populated by JS -->
                     </div>
@@ -436,6 +454,7 @@
         selectedWilayah: "{{ $selectedWilayah }}",
         selectedSector: "{{ $selectedSector }}",
         headlineIndicators: @json($headlineIndicators),
+        kabupatenHeadlines: @json(config('statistik.headline_indicators')),
         sectorIndicators: @json($sectorIndicators),
         allKecamatan: @json($allKecamatan),
         routes: {

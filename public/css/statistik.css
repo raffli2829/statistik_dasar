@@ -81,6 +81,10 @@ body {
     font-family: var(--font-mono);
 }
 
+.hidden {
+    display: none !important;
+}
+
 .container {
     width: 100%;
     max-width: 1240px;
@@ -194,19 +198,6 @@ body {
     color: var(--primary);
 }
 
-.hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-full);
-    background: var(--primary-light);
-    color: var(--primary);
-    font-size: 0.75rem;
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-}
-
 .hero-title {
     font-size: 2.25rem;
     font-weight: 800;
@@ -242,7 +233,7 @@ body {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .filter-pill {
@@ -339,6 +330,58 @@ body {
     padding: 0.35rem 0.75rem;
     font-size: 0.75rem;
     border-radius: var(--radius-sm);
+}
+
+/* Active Wilayah Info Banner */
+.active-wilayah-banner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    background: var(--primary-light);
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    border-radius: var(--radius-md);
+    margin: 0 auto 1.75rem;
+    max-width: 780px;
+    box-shadow: var(--shadow-sm);
+    animation: fadeIn 0.3s ease;
+}
+
+@media (min-width: 640px) {
+    .active-wilayah-banner {
+        flex-direction: row;
+    }
+}
+
+.active-wilayah-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-main);
+}
+
+.btn-reset-wilayah {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-reset-wilayah:hover {
+    background: var(--primary);
+    color: #FFFFFF;
 }
 
 /* 4 KPI Grid */
@@ -514,7 +557,7 @@ body {
     margin-bottom: 1.5rem;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
     .section-header {
         flex-direction: row;
         align-items: center;
@@ -536,6 +579,43 @@ body {
     font-size: 0.85rem;
     color: var(--text-muted);
     margin-top: 0.25rem;
+}
+
+.chart-controls-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-order-toggle {
+    display: inline-flex;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.order-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.65rem;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.order-btn.active {
+    background: var(--primary-light);
+    color: var(--primary);
+    font-weight: 700;
 }
 
 .chart-mode-group {
@@ -839,10 +919,33 @@ body {
     background-color: var(--bg-muted);
 }
 
+/* Row Selected Highlight */
+.row-selected-highlight {
+    background-color: var(--primary-light) !important;
+    border-left: 3px solid var(--primary);
+}
+
 .kecamatan-identity {
     display: flex;
     align-items: center;
     gap: 0.6rem;
+}
+
+.kecamatan-name-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.badge-fokus-wilayah {
+    display: inline-block;
+    padding: 0.1rem 0.4rem;
+    background: var(--primary);
+    color: #FFFFFF;
+    border-radius: var(--radius-sm);
+    font-size: 0.6rem;
+    font-weight: 700;
+    width: fit-content;
 }
 
 .kecamatan-badge {
@@ -852,11 +955,16 @@ body {
     width: 26px;
     height: 26px;
     border-radius: var(--radius-sm);
-    background: var(--primary-light);
-    color: var(--primary);
+    background: var(--bg-muted);
+    color: var(--text-main);
     font-size: 0.65rem;
     font-weight: 800;
     font-family: var(--font-mono);
+}
+
+.kecamatan-badge.badge-active {
+    background: var(--primary);
+    color: #FFFFFF;
 }
 
 .td-unit {
@@ -884,6 +992,11 @@ body {
     background: linear-gradient(90deg, #EF4444 0%, #DC2626 100%);
     border-radius: var(--radius-full);
     transition: width 0.4s ease;
+}
+
+.proportion-bar-fill.fill-active {
+    background: linear-gradient(90deg, #DC2626 0%, #991B1B 100%);
+    box-shadow: 0 0 8px rgba(220, 38, 38, 0.4);
 }
 
 .proportion-pct {
