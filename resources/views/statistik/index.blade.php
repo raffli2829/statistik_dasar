@@ -256,11 +256,6 @@
                             <i data-lucide="file-spreadsheet" class="icon-xs text-rose-600"></i>
                             <span>CSV</span>
                         </a>
-
-                        <a href="{{ route('download.json', ['sektor' => $selectedSector, 'tahun' => $selectedYear]) }}" id="btn-export-json" class="btn-outline btn-sm">
-                            <i data-lucide="code-2" class="icon-xs text-red-600"></i>
-                            <span>JSON</span>
-                        </a>
                     </div>
                 </div>
 

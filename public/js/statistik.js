@@ -366,7 +366,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const elTableLabel = document.getElementById('table-indicator-label');
         const elThMetric = document.getElementById('th-metric-header');
         const elExportCsv = document.getElementById('btn-export-csv');
-        const elExportJson = document.getElementById('btn-export-json');
 
         const activeKec = (config.allKecamatan || []).find(k => k.id === currentWilayah);
         const wilayahLabel = activeKec ? `Kec. ${activeKec.name}` : 'Kabupaten Bangka';
@@ -383,9 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (elExportCsv) {
             elExportCsv.href = `${config.routes.downloadCsv}/${sectorId}/${currentYear}`;
-        }
-        if (elExportJson) {
-            elExportJson.href = `${config.routes.downloadJson}/${sectorId}/${currentYear}`;
         }
 
         if (elAnalysis) {
