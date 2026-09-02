@@ -144,34 +144,20 @@
                     </p>
                 </div>
 
-                <div class="chart-controls-wrap">
-                    <!-- Urutan Tahun Toggle: Terbaru vs Kronologis -->
-                    <div class="chart-order-toggle">
-                        <button type="button" class="order-btn active" id="btn-order-desc" onclick="setChartTimeOrder('desc')" title="Mulai dari Tahun Terbaru (2024 → 2020)">
-                            <i data-lucide="arrow-down-narrow-wide" class="icon-xs"></i>
-                            <span>Terbaru (2024 &rarr; 2020)</span>
-                        </button>
-                        <button type="button" class="order-btn" id="btn-order-asc" onclick="setChartTimeOrder('asc')" title="Kronologis (2020 → 2024)">
-                            <i data-lucide="arrow-up-narrow-wide" class="icon-xs"></i>
-                            <span>Kronologis (2020 &rarr; 2024)</span>
-                        </button>
-                    </div>
-
-                    <!-- Mode Switcher (Area / Line / Bar) -->
-                    <div class="chart-mode-group">
-                        <button type="button" class="chart-mode-btn active" data-mode="area" title="Mode Grafik Area">
-                            <i data-lucide="layers" class="icon-sm"></i>
-                            <span>Area</span>
-                        </button>
-                        <button type="button" class="chart-mode-btn" data-mode="line" title="Mode Grafik Garis">
-                            <i data-lucide="activity" class="icon-sm"></i>
-                            <span>Garis</span>
-                        </button>
-                        <button type="button" class="chart-mode-btn" data-mode="bar" title="Mode Grafik Batang">
-                            <i data-lucide="bar-chart-3" class="icon-sm"></i>
-                            <span>Batang</span>
-                        </button>
-                    </div>
+                <!-- Mode Switcher (Area / Line / Bar) -->
+                <div class="chart-mode-group">
+                    <button type="button" class="chart-mode-btn active" data-mode="area" title="Mode Grafik Area">
+                        <i data-lucide="layers" class="icon-sm"></i>
+                        <span>Area</span>
+                    </button>
+                    <button type="button" class="chart-mode-btn" data-mode="line" title="Mode Grafik Garis">
+                        <i data-lucide="activity" class="icon-sm"></i>
+                        <span>Garis</span>
+                    </button>
+                    <button type="button" class="chart-mode-btn" data-mode="bar" title="Mode Grafik Batang">
+                        <i data-lucide="bar-chart-3" class="icon-sm"></i>
+                        <span>Batang</span>
+                    </button>
                 </div>
             </div>
 

@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSectorId = config.selectedSector || 'kependudukan';
     let currentYear = config.selectedYear || 2024;
     let currentWilayah = config.selectedWilayah || 'kabupaten';
-    let currentTimeOrder = 'desc'; // 'desc' = 2024 -> 2020, 'asc' = 2020 -> 2024
+    let currentTimeOrder = 'asc'; // Kronologis: 2020 -> 2024
     
     let mainChartInstance = null;
     let sparklineInstances = {};
