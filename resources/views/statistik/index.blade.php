@@ -31,10 +31,27 @@
                 <!-- Filter Controls -->
                 <div class="filter-toolbar">
                     <!-- Filter Tahun (5 Tahun Terakhir: 2024 - 2020) -->
-                    <div class="filter-pill">
+                    <div class="filter-pill dropdown-pill" id="pill-year">
                         <i data-lucide="calendar" class="icon-sm text-primary"></i>
                         <span class="filter-label">Tahun:</span>
-                        <select id="select-year" class="filter-select font-mono">
+                        <div class="theme-dropdown" id="dropdown-year">
+                            <button type="button" class="theme-dropdown-trigger font-mono" id="trigger-year" aria-haspopup="listbox" aria-expanded="false" title="Pilih Tahun Data">
+                                <span class="dropdown-trigger-label" id="label-year">{{ $selectedYear }}</span>
+                                <i data-lucide="chevron-down" class="icon-xs dropdown-chevron"></i>
+                            </button>
+                            <div class="theme-dropdown-menu" id="menu-year" role="listbox">
+                                @foreach($years as $y)
+                                    <div class="theme-dropdown-item font-mono {{ $selectedYear == $y ? 'is-active' : '' }}" 
+                                         role="option" 
+                                         data-value="{{ $y }}"
+                                         aria-selected="{{ $selectedYear == $y ? 'true' : 'false' }}">
+                                        <span>{{ $y }}</span>
+                                        <i data-lucide="check" class="icon-xs item-check-icon {{ $selectedYear == $y ? '' : 'hidden' }}"></i>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <select id="select-year" class="filter-select-hidden" aria-hidden="true" tabindex="-1">
                             @foreach($years as $y)
                                 <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>{{ $y }}</option>
                             @endforeach
@@ -42,10 +59,34 @@
                     </div>
 
                     <!-- Filter Wilayah (Kabupaten vs 8 Kecamatan) -->
-                    <div class="filter-pill">
+                    <div class="filter-pill dropdown-pill" id="pill-wilayah">
                         <i data-lucide="map-pin" class="icon-sm text-primary"></i>
                         <span class="filter-label">Wilayah:</span>
-                        <select id="select-wilayah" class="filter-select">
+                        <div class="theme-dropdown" id="dropdown-wilayah">
+                            <button type="button" class="theme-dropdown-trigger" id="trigger-wilayah" aria-haspopup="listbox" aria-expanded="false" title="Pilih Wilayah Cakupan">
+                                <span class="dropdown-trigger-label" id="label-wilayah">{{ $selectedWilayah == 'kabupaten' ? 'Kabupaten Bangka (Semua)' : 'Kec. ' . ($activeKecamatan['name'] ?? '') }}</span>
+                                <i data-lucide="chevron-down" class="icon-xs dropdown-chevron"></i>
+                            </button>
+                            <div class="theme-dropdown-menu menu-wide" id="menu-wilayah" role="listbox">
+                                <div class="theme-dropdown-item {{ $selectedWilayah == 'kabupaten' ? 'is-active' : '' }}" 
+                                     role="option" 
+                                     data-value="kabupaten"
+                                     aria-selected="{{ $selectedWilayah == 'kabupaten' ? 'true' : 'false' }}">
+                                    <span>Kabupaten Bangka (Semua)</span>
+                                    <i data-lucide="check" class="icon-xs item-check-icon {{ $selectedWilayah == 'kabupaten' ? '' : 'hidden' }}"></i>
+                                </div>
+                                @foreach($allKecamatan as $k)
+                                    <div class="theme-dropdown-item {{ $selectedWilayah == $k['id'] ? 'is-active' : '' }}" 
+                                         role="option" 
+                                         data-value="{{ $k['id'] }}"
+                                         aria-selected="{{ $selectedWilayah == $k['id'] ? 'true' : 'false' }}">
+                                        <span>Kec. {{ $k['name'] }}</span>
+                                        <i data-lucide="check" class="icon-xs item-check-icon {{ $selectedWilayah == $k['id'] ? '' : 'hidden' }}"></i>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <select id="select-wilayah" class="filter-select-hidden" aria-hidden="true" tabindex="-1">
                             <option value="kabupaten" {{ $selectedWilayah == 'kabupaten' ? 'selected' : '' }}>Kabupaten Bangka (Semua)</option>
                             @foreach($allKecamatan as $k)
                                 <option value="{{ $k['id'] }}" {{ $selectedWilayah == $k['id'] ? 'selected' : '' }}>Kec. {{ $k['name'] }}</option>
@@ -226,7 +267,7 @@
                             Distribusi 8 Kecamatan se-Kabupaten Bangka
                         </h3>
                         <p class="table-subtitle">
-                            Capaian indikator <strong id="table-indicator-label" class="text-foreground">{{ $currentSector['column']['label'] }}</strong> per kecamatan pada tahun {{ $selectedYear }}.
+                            Capaian indikator <strong id="table-indicator-label" class="text-foreground">{{ $currentSector['column']['label'] }}</strong> per kecamatan pada tahun <span id="table-year-label">{{ $selectedYear }}</span>.
                         </p>
                     </div>
 

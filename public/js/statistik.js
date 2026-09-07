@@ -89,18 +89,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Mendapatkan 4 KPI cards yang aktif (Kabupaten vs Kecamatan terpilih)
+    // Mendapatkan 4 KPI cards yang aktif (Kabupaten vs Kecamatan terpilih) disesuaikan dengan currentYear
     function getActiveKPIIndicators() {
+        let baseList = [];
         if (currentWilayah === 'kabupaten') {
-            return config.kabupatenHeadlines || config.headlineIndicators || [];
+            baseList = config.kabupatenHeadlines || config.headlineIndicators || [];
+        } else {
+            const kec = (config.allKecamatan || []).find(k => k.id === currentWilayah);
+            if (kec && kec.kpi_cards) {
+                baseList = kec.kpi_cards;
+            } else {
+                baseList = config.kabupatenHeadlines || [];
+            }
         }
 
-        const kec = (config.allKecamatan || []).find(k => k.id === currentWilayah);
-        if (kec && kec.kpi_cards) {
-            return kec.kpi_cards;
-        }
-
-        return config.kabupatenHeadlines || [];
+        return baseList.map(ind => {
+            const copy = Object.assign({}, ind);
+            if (copy.trend && copy.trend.length > 0) {
+                const pt = copy.trend.find(t => t.year === Number(currentYear));
+                if (pt) {
+                    copy.value = pt.value;
+                }
+                const prevPt = copy.trend.find(t => t.year === Number(currentYear) - 1);
+                if (pt && prevPt && prevPt.value !== 0) {
+                    if (copy.unit === '%' || copy.unit === 'Poin') {
+                        copy.yoy_change = Number((pt.value - prevPt.value).toFixed(2));
+                    } else {
+                        copy.yoy_change = Number((((pt.value - prevPt.value) / Math.abs(prevPt.value)) * 100).toFixed(2));
+                    }
+                }
+            }
+            return copy;
+        });
     }
 
     // ==========================================
@@ -136,6 +156,11 @@ document.addEventListener('DOMContentLoaded', () => {
         gradient.addColorStop(0, 'rgba(220, 38, 38, 0.35)');
         gradient.addColorStop(1, 'rgba(220, 38, 38, 0.0)');
 
+        const pointRadii = labels.map(l => l === String(currentYear) ? 7 : (currentChartMode === 'bar' ? 0 : 5));
+        const pointBackgroundColors = labels.map(l => l === String(currentYear) ? PRIMARY_RED : '#FFFFFF');
+        const pointBorderColors = labels.map(l => l === String(currentYear) ? '#FFFFFF' : PRIMARY_RED);
+        const barColors = labels.map(l => l === String(currentYear) ? PRIMARY_RED : (isDarkMode ? 'rgba(239, 68, 68, 0.45)' : 'rgba(220, 38, 38, 0.45)'));
+
         let chartConfig = {
             type: currentChartMode === 'bar' ? 'bar' : 'line',
             data: {
@@ -145,14 +170,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     data: values,
                     borderColor: PRIMARY_RED,
                     borderWidth: currentChartMode === 'bar' ? 0 : 2.5,
-                    backgroundColor: currentChartMode === 'bar' ? PRIMARY_RED : (currentChartMode === 'area' ? gradient : 'transparent'),
+                    backgroundColor: currentChartMode === 'bar' ? barColors : (currentChartMode === 'area' ? gradient : 'transparent'),
                     fill: currentChartMode === 'area',
                     tension: 0.35,
-                    pointRadius: currentChartMode === 'bar' ? 0 : 5,
-                    pointBackgroundColor: '#FFFFFF',
-                    pointBorderColor: PRIMARY_RED,
+                    pointRadius: pointRadii,
+                    pointBackgroundColor: pointBackgroundColors,
+                    pointBorderColor: pointBorderColors,
                     pointBorderWidth: 2,
-                    pointHoverRadius: 7,
+                    pointHoverRadius: 8,
                     borderRadius: currentChartMode === 'bar' ? 6 : 0
                 }]
             },
@@ -207,6 +232,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const pt = copy.trend.find(t => t.year === Number(currentYear));
                 copy.value = pt ? pt.value : (copy.trend[0]?.value || 0);
             }
+        } else {
+            if (copy.trend && copy.trend.length > 0) {
+                const pt = copy.trend.find(t => t.year === Number(currentYear));
+                if (pt) copy.value = pt.value;
+                const prevPt = copy.trend.find(t => t.year === Number(currentYear) - 1);
+                if (pt && prevPt && prevPt.value !== 0) {
+                    if (copy.unit === '%' || copy.unit === 'Poin') {
+                        copy.yoy_change = Number((pt.value - prevPt.value).toFixed(2));
+                    } else {
+                        copy.yoy_change = Number((((pt.value - prevPt.value) / Math.abs(prevPt.value)) * 100).toFixed(2));
+                    }
+                }
+            }
         }
 
         return copy;
@@ -238,6 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Highlight baris tabel kecamatan
         highlightTableRow(wilayahId);
+
+        // Sync dropdown wilayah UI
+        syncWilayahDropdown(wilayahId);
 
         // Update sektor view & chart
         switchSector(currentSectorId);
@@ -379,6 +420,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (elTableLabel) elTableLabel.textContent = sectorData.column.label;
         if (elThMetric) elThMetric.textContent = `${sectorData.column.label} (${sectorData.column.unit})`;
+
+        const elTableYear = document.getElementById('table-year-label');
+        if (elTableYear) elTableYear.textContent = currentYear;
 
         if (elExportCsv) {
             elExportCsv.href = `${config.routes.downloadCsv}/${sectorId}/${currentYear}`;
@@ -574,15 +618,140 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // ==========================================
-    // 9. Filter Tahun & Wilayah Listeners
+    // 9. Filter Tahun & Wilayah Listeners & Dropdowns
     // ==========================================
+    function setupCustomDropdowns() {
+        const dropdowns = document.querySelectorAll('.theme-dropdown');
+
+        dropdowns.forEach(dd => {
+            const trigger = dd.querySelector('.theme-dropdown-trigger');
+            const menu = dd.querySelector('.theme-dropdown-menu');
+            const items = dd.querySelectorAll('.theme-dropdown-item');
+            const pill = dd.closest('.filter-pill');
+            const selectId = dd.id === 'dropdown-year' ? 'select-year' : 'select-wilayah';
+            const nativeSelect = document.getElementById(selectId);
+
+            if (!trigger || !menu) return;
+
+            // Toggle menu on trigger click
+            trigger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = dd.classList.contains('is-open');
+                closeAllDropdowns();
+                if (!isOpen) {
+                    dd.classList.add('is-open');
+                    if (pill) pill.classList.add('is-open');
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            // Select item
+            items.forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const val = item.getAttribute('data-value');
+                    const labelSpan = dd.querySelector('.dropdown-trigger-label');
+
+                    // Update active item in menu
+                    items.forEach(i => {
+                        i.classList.remove('is-active');
+                        i.setAttribute('aria-selected', 'false');
+                        const check = i.querySelector('.item-check-icon');
+                        if (check) check.classList.add('hidden');
+                    });
+
+                    item.classList.add('is-active');
+                    item.setAttribute('aria-selected', 'true');
+                    const check = item.querySelector('.item-check-icon');
+                    if (check) check.classList.remove('hidden');
+
+                    // Update trigger text
+                    const itemText = item.querySelector('span')?.textContent || val;
+                    if (labelSpan) labelSpan.textContent = itemText;
+
+                    // Close dropdown
+                    closeAllDropdowns();
+
+                    // Sync with native select and trigger change
+                    if (nativeSelect) {
+                        nativeSelect.value = val;
+                        nativeSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            });
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.theme-dropdown')) {
+                closeAllDropdowns();
+            }
+        });
+
+        // Close on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeAllDropdowns();
+            }
+        });
+    }
+
+    function closeAllDropdowns() {
+        document.querySelectorAll('.theme-dropdown.is-open').forEach(dd => {
+            dd.classList.remove('is-open');
+            const pill = dd.closest('.filter-pill');
+            if (pill) pill.classList.remove('is-open');
+            const trigger = dd.querySelector('.theme-dropdown-trigger');
+            if (trigger) trigger.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    function syncWilayahDropdown(wilayahId) {
+        const ddWilayah = document.getElementById('dropdown-wilayah');
+        if (!ddWilayah) return;
+        const items = ddWilayah.querySelectorAll('.theme-dropdown-item');
+        let labelText = 'Kabupaten Bangka (Semua)';
+
+        items.forEach(i => {
+            const val = i.getAttribute('data-value');
+            const isMatch = (val === String(wilayahId));
+            i.classList.toggle('is-active', isMatch);
+            i.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+            const check = i.querySelector('.item-check-icon');
+            if (check) check.classList.toggle('hidden', !isMatch);
+            if (isMatch) {
+                labelText = i.querySelector('span')?.textContent || labelText;
+            }
+        });
+
+        const label = ddWilayah.querySelector('.dropdown-trigger-label');
+        if (label) label.textContent = labelText;
+    }
+
     const selectYear = document.getElementById('select-year');
     if (selectYear) {
         selectYear.addEventListener('change', (e) => {
-            currentYear = e.target.value;
-            switchSector(currentSectorId);
+            currentYear = Number(e.target.value);
+            // Sync custom dropdown label if changed programmatically
+            const labelYear = document.getElementById('label-year');
+            if (labelYear) labelYear.textContent = currentYear;
+            const ddYear = document.getElementById('dropdown-year');
+            if (ddYear) {
+                ddYear.querySelectorAll('.theme-dropdown-item').forEach(i => {
+                    const isActive = (Number(i.getAttribute('data-value')) === currentYear);
+                    i.classList.toggle('is-active', isActive);
+                    i.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    const check = i.querySelector('.item-check-icon');
+                    if (check) check.classList.toggle('hidden', !isActive);
+                });
+            }
+
+            // Re-render KPI cards with currentYear values and "Tahun ${currentYear}"
             const kpiData = getActiveKPIIndicators();
-            initSparklines(kpiData);
+            renderKPICards(kpiData);
+
+            // Update sectoral view, chart, table, stats, and analysis text
+            switchSector(currentSectorId);
         });
     }
 
@@ -597,6 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (selectWilayah) {
             selectWilayah.value = 'kabupaten';
         }
+        syncWilayahDropdown('kabupaten');
         updateWilayahView('kabupaten');
     };
 
@@ -636,6 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initializations
+    setupCustomDropdowns();
     initSparklines();
     initMainChart();
     updateThemeIcon();

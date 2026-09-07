@@ -34,9 +34,15 @@
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+
+    color-scheme: light;
 }
 
-.dark {
+html {
+    color-scheme: light;
+}
+
+.dark, html.dark {
     --bg-main: #09090B;
     --bg-card: #18181B;
     --bg-muted: #27272A;
@@ -57,6 +63,28 @@
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6);
+
+    color-scheme: dark;
+}
+
+/* Fallback native select theme styling */
+select, .filter-select {
+    color-scheme: light;
+}
+
+.dark select, .dark .filter-select, html.dark select, html.dark .filter-select {
+    color-scheme: dark;
+}
+
+select option, .filter-select option {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+}
+
+.dark select option, .dark .filter-select option {
+    background-color: #18181B;
+    color: #FAFAFA;
 }
 
 /* Base Styles */
@@ -237,6 +265,7 @@ body {
 }
 
 .filter-pill {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -245,6 +274,14 @@ body {
     border: 1px solid var(--border);
     border-radius: var(--radius-full);
     box-shadow: var(--shadow-sm);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-pill:hover,
+.filter-pill:focus-within,
+.filter-pill.is-open {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
 .filter-label {
@@ -253,6 +290,7 @@ body {
     color: var(--text-muted);
 }
 
+/* Fallback visible filter-select */
 .filter-select {
     background: transparent;
     border: none;
@@ -261,6 +299,154 @@ body {
     font-weight: 700;
     cursor: pointer;
     outline: none;
+}
+
+/* ==========================================================================
+   THEME-AWARE CUSTOM DROPDOWN (Tahun & Wilayah)
+   ========================================================================== */
+.theme-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.theme-dropdown-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: none;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0.15rem 0.2rem;
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: color 0.15s ease;
+}
+
+.theme-dropdown-trigger:hover {
+    color: var(--primary);
+}
+
+.theme-dropdown-trigger:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+.dropdown-trigger-label {
+    white-space: nowrap;
+}
+
+.dropdown-chevron {
+    color: var(--text-muted);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+}
+
+.theme-dropdown.is-open .dropdown-chevron {
+    transform: rotate(180deg);
+    color: var(--primary);
+}
+
+/* Floating Dropdown Menu */
+.theme-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 140px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 12px 30px -4px rgba(0, 0, 0, 0.35), 0 4px 12px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 0.35rem;
+    z-index: 100;
+    display: none;
+    flex-direction: column;
+    gap: 0.15rem;
+    max-height: 280px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.theme-dropdown-menu::-webkit-scrollbar {
+    width: 5px;
+}
+
+.theme-dropdown-menu::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+.theme-dropdown-menu.menu-wide {
+    min-width: 220px;
+}
+
+.theme-dropdown.is-open .theme-dropdown-menu {
+    display: flex;
+    animation: themeDropdownPop 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes themeDropdownPop {
+    from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Dropdown Option Items */
+.theme-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+}
+
+.theme-dropdown-item:hover {
+    background-color: var(--primary-light);
+    color: var(--primary);
+}
+
+.theme-dropdown-item.is-active {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    font-weight: 700;
+}
+
+.theme-dropdown-item .item-check-icon {
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+/* Hidden Fallback Select for Screen Readers / Forms */
+.filter-select-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .btn-pill {
