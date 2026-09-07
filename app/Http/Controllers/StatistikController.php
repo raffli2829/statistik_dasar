@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\SatuDataService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -10,12 +11,12 @@ class StatistikController extends Controller
     /**
      * Menampilkan halaman sub-modul Statistik Dasar Pemerintah Kabupaten Bangka.
      */
-    public function index(Request $request)
+    public function index(Request $request, SatuDataService $satuDataService)
     {
         $years = config('statistik.years');
         $defaultYear = config('statistik.default_year');
         $selectedYear = (int) $request->get('tahun', $defaultYear);
-        if (!in_array($selectedYear, $years)) {
+        if (! in_array($selectedYear, $years)) {
             $selectedYear = $defaultYear;
         }
 
@@ -25,9 +26,15 @@ class StatistikController extends Controller
         $allKecamatan = config('statistik.kecamatan');
         $sectors = config('statistik.sectors');
         $sectorIndicators = config('statistik.sector_indicators');
-        $featuredDatasets = config('statistik.featured_datasets');
 
-        if (!isset($sectorIndicators[$selectedSector])) {
+        // Ambil dataset riil live langsung dari CKAN API satudata.bangka.go.id sesuai tahun terpilih
+        $featuredDatasets = $satuDataService->getDatasets(6, (string) $selectedYear);
+        if (empty($featuredDatasets)) {
+            $featuredDatasets = $satuDataService->getDatasets(6);
+        }
+        $portalStats = $satuDataService->getPortalStats();
+
+        if (! isset($sectorIndicators[$selectedSector])) {
             $selectedSector = 'kependudukan';
         }
 
@@ -56,16 +63,23 @@ class StatistikController extends Controller
             // cari value tahun terpilih
             $trendPoint = collect($kecTrend)->firstWhere('year', $selectedYear);
             $val = $trendPoint ? $trendPoint['value'] : ($kecTrend[0]['value'] ?? 0);
-            
+
             $currentSector['name'] = "{$currentSector['column']['label']} Kec. {$activeKecamatan['name']}";
             $currentSector['value'] = $val;
             $currentSector['trend'] = $kecTrend;
+            $currentSector['unit'] = $currentSector['column']['unit'];
+            $currentSector['digits'] = $currentSector['column']['digits'] ?? 0;
+            if (isset($currentSector['metadata'])) {
+                $currentSector['metadata']['satuan'] = $currentSector['column']['unit'];
+            }
+        } else {
+            $currentSector['digits'] = $currentSector['digits'] ?? ($currentSector['unit'] === '%' || $currentSector['unit'] === 'Poin' || $currentSector['unit'] === 'Tahun' || str_contains($currentSector['unit'], 'Juta') ? 2 : 0);
         }
 
         // Hitung nilai kecamatan untuk tabel
         $kecamatanList = collect($allKecamatan)->map(function ($k) use ($selectedSector, $selectedYear, $sectorIndicators) {
             $colKey = $sectorIndicators[$selectedSector]['column']['key'];
-            
+
             // Ambil dari sector_trends jika ada
             if (isset($k['sector_trends'][$selectedSector])) {
                 $p = collect($k['sector_trends'][$selectedSector])->firstWhere('year', $selectedYear);
@@ -73,6 +87,7 @@ class StatistikController extends Controller
             } else {
                 $k['current_value'] = $k[$colKey] ?? 0;
             }
+
             return $k;
         });
 
@@ -92,6 +107,7 @@ class StatistikController extends Controller
             'allKecamatan' => $allKecamatan,
             'maxVal' => $maxVal,
             'featuredDatasets' => $featuredDatasets,
+            'portalStats' => $portalStats,
         ]);
     }
 
@@ -101,7 +117,7 @@ class StatistikController extends Controller
     public function getSectorData(Request $request, string $id)
     {
         $sectorIndicators = config('statistik.sector_indicators');
-        if (!isset($sectorIndicators[$id])) {
+        if (! isset($sectorIndicators[$id])) {
             return response()->json(['error' => 'Sektor tidak ditemukan'], 404);
         }
 
@@ -118,7 +134,14 @@ class StatistikController extends Controller
                 $point = collect($data['trend'])->firstWhere('year', $tahun);
                 $data['value'] = $point ? $point['value'] : ($data['trend'][0]['value'] ?? 0);
                 $data['kecamatan'] = $kec['name'];
+                $data['unit'] = $data['column']['unit'];
+                $data['digits'] = $data['column']['digits'] ?? 0;
+                if (isset($data['metadata'])) {
+                    $data['metadata']['satuan'] = $data['column']['unit'];
+                }
             }
+        } else {
+            $data['digits'] = $data['digits'] ?? ($data['unit'] === '%' || $data['unit'] === 'Poin' || $data['unit'] === 'Tahun' || str_contains($data['unit'], 'Juta') ? 2 : 0);
         }
 
         return response()->json($data);
@@ -139,8 +162,11 @@ class StatistikController extends Controller
             $val = $k[$colKey] ?? 0;
             if (isset($k['sector_trends'][$sektor])) {
                 $p = collect($k['sector_trends'][$sektor])->firstWhere('year', $tahun);
-                if ($p) $val = $p['value'];
+                if ($p) {
+                    $val = $p['value'];
+                }
             }
+
             return [
                 'id' => $k['id'],
                 'name' => $k['name'],
@@ -177,7 +203,9 @@ class StatistikController extends Controller
                 $val = $k[$col['key']] ?? 0;
                 if (isset($k['sector_trends'][$sektor])) {
                     $p = collect($k['sector_trends'][$sektor])->firstWhere('year', $tahun);
-                    if ($p) $val = $p['value'];
+                    if ($p) {
+                        $val = $p['value'];
+                    }
                 }
 
                 fputcsv($handle, [
@@ -223,8 +251,11 @@ class StatistikController extends Controller
                 $val = $k[$col['key']] ?? 0;
                 if (isset($k['sector_trends'][$sektor])) {
                     $p = collect($k['sector_trends'][$sektor])->firstWhere('year', $tahun);
-                    if ($p) $val = $p['value'];
+                    if ($p) {
+                        $val = $p['value'];
+                    }
                 }
+
                 return [
                     'peringkat' => $idx + 1,
                     'nama_kecamatan' => $k['name'],

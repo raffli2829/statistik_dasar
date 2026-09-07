@@ -146,7 +146,7 @@
                             <div class="kpi-body">
                                 <div class="kpi-value-row">
                                     <span class="kpi-number font-mono" id="kpi-val-{{ $ind['id'] }}">
-                                        {{ number_format($ind['value'], (isset($ind['unit']) && ($ind['unit'] == 'Poin' || $ind['unit'] == '%' || str_contains($ind['unit'], 'Juta')) ? 2 : 0), ',', '.') }}
+                                        {{ number_format($ind['value'], (isset($ind['digits']) ? $ind['digits'] : (isset($ind['unit']) && ($ind['unit'] == 'Poin' || $ind['unit'] == '%' || $ind['unit'] == 'Km²' || str_contains($ind['unit'], 'Juta')) ? 2 : 0)), ',', '.') }}
                                     </span>
                                     <span class="kpi-unit" id="kpi-unit-{{ $ind['id'] }}">{{ $ind['unit'] }}</span>
                                 </div>
@@ -181,7 +181,7 @@
                         Eksplorasi Statistik Sektoral
                     </h2>
                     <p class="section-desc">
-                        Tren perkembangan 5 tahun terakhir (2020–2024) menurut bidang urusan pemerintahan resmi BPS Kabupaten Bangka.
+                        Tren perkembangan deret waktu berkala ({{ end($years) }}–{{ $years[0] }}) menurut bidang urusan pemerintahan resmi BPS Kabupaten Bangka.
                     </p>
                 </div>
 
@@ -231,7 +231,7 @@
 
                     <div class="chart-header-actions">
                         <span class="pill-highlight font-mono" id="chart-current-stat">
-                            Thn {{ $selectedYear }}: {{ number_format($currentSector['value'], $currentSector['column']['digits'] ?? 2, ',', '.') }} {{ $currentSector['unit'] }}
+                            Thn {{ $selectedYear }}: {{ number_format($currentSector['value'], $currentSector['digits'] ?? ($currentSector['column']['digits'] ?? 2), ',', '.') }} {{ $currentSector['unit'] }}
                         </span>
                         <button type="button" class="btn-outline btn-sm" onclick="openMetadataModal('{{ $selectedSector }}')">
                             <i data-lucide="info" class="icon-xs"></i>
@@ -249,7 +249,7 @@
                 <div class="analysis-box">
                     <i data-lucide="sparkles" class="icon-sm text-primary"></i>
                     <p class="analysis-text" id="chart-analysis-text">
-                        <strong>Analisis Tren:</strong> Indikator <strong>{{ $currentSector['name'] }}</strong> {{ $activeKecamatan ? 'di Kecamatan ' . $activeKecamatan['name'] : 'di Kabupaten Bangka' }} tercatat sebesar <strong>{{ number_format($currentSector['value'], $currentSector['column']['digits'] ?? 2, ',', '.') }} {{ $currentSector['unit'] }}</strong> pada tahun {{ $selectedYear }} dengan rujukan resmi {{ $currentSector['metadata']['produsen'] }}.
+                        <strong>Analisis Tren:</strong> Indikator <strong>{{ $currentSector['name'] }}</strong> {{ $activeKecamatan ? 'di Kecamatan ' . $activeKecamatan['name'] : 'di Kabupaten Bangka' }} tercatat sebesar <strong>{{ number_format($currentSector['value'], $currentSector['digits'] ?? ($currentSector['column']['digits'] ?? 2), ',', '.') }} {{ $currentSector['unit'] }}</strong> pada tahun {{ $selectedYear }} dengan rujukan resmi {{ $currentSector['metadata']['produsen'] }}.
                     </p>
                 </div>
             </div>
@@ -355,53 +355,80 @@
         <div class="container">
             <div class="section-header">
                 <div>
-                    <h2 class="section-title">
-                        <i data-lucide="database" class="icon-lg text-primary"></i>
-                        Dataset Rujukan Resmi Terkait
-                    </h2>
+                    <div class="flex items-center gap-2 mb-1">
+                        <h2 class="section-title">
+                            <i data-lucide="database" class="icon-lg text-primary"></i>
+                            Dataset Terkait di Satu Data Bangka
+                        </h2>
+                        <span class="badge-live-api" title="Terhubung langsung ke CKAN API satudata.bangka.go.id">
+                            <span class="pulse-dot"></span> Live CKAN API
+                        </span>
+                    </div>
                     <p class="section-desc">
-                        Katalog data terverifikasi yang dipublikasikan pada Open Data Portal Kabupaten Bangka.
+                        Katalog data riil terverifikasi resmi oleh Walidata &amp; OPD Pemerintah Kabupaten Bangka ({{ $portalStats['total_datasets'] ?? '173' }}+ Dataset Aktif).
                     </p>
                 </div>
 
                 <a href="https://satudata.bangka.go.id/dataset" target="_blank" rel="noreferrer" class="btn-outline btn-sm">
-                    <span>Lihat Semua Dataset</span>
-                    <i data-lucide="file-text" class="icon-xs"></i>
+                    <span>Jelajahi Seluruh Dataset</span>
+                    <i data-lucide="external-link" class="icon-xs"></i>
                 </a>
             </div>
 
             <div class="dataset-grid">
-                @foreach($featuredDatasets as $ds)
+                @forelse($featuredDatasets as $ds)
                     <div class="dataset-card">
                         <div class="dataset-header">
                             <h4 class="dataset-title">
-                                <a href="{{ $ds['url'] }}" target="_blank" rel="noreferrer">{{ $ds['title'] }}</a>
+                                <a href="{{ $ds['portal_url'] ?? 'https://satudata.bangka.go.id/dataset' }}" target="_blank" rel="noreferrer" title="Lihat di Portal Satu Data">
+                                    {{ $ds['title'] }}
+                                </a>
                             </h4>
-                            <span class="badge-tag">1 file</span>
+                            @php
+                                $fmt = strtoupper($ds['primary_format'] ?? 'CSV');
+                                $fmtClass = $fmt === 'XLSX' ? 'badge-format-xlsx' : ($fmt === 'PDF' ? 'badge-format-pdf' : 'badge-format-csv');
+                            @endphp
+                            <span class="badge-format {{ $fmtClass }}">{{ $fmt }}</span>
                         </div>
 
                         <div class="dataset-body">
                             <p class="dataset-desc">
-                                Dataset statistik sektoral terverifikasi untuk perencanaan, evaluasi, dan perumusan kebijakan pembangunan daerah.
+                                {{ $ds['notes'] }}
                             </p>
                             <div class="dataset-tags">
-                                <span class="tag-pill">{{ strtoupper($ds['category']) }}</span>
-                                <span class="tag-pill">STATISTIK BPS</span>
+                                <span class="tag-pill">OPD KAB. BANGKA</span>
+                                <span class="tag-pill">WALIDATA SDI</span>
                             </div>
                         </div>
 
                         <div class="dataset-footer">
                             <div class="dataset-meta-item">
                                 <i data-lucide="building-2" class="icon-xs text-primary"></i>
-                                <span class="truncate">{{ $ds['opd'] }}</span>
+                                <span class="truncate font-medium">{{ $ds['organization'] }}</span>
                             </div>
                             <div class="dataset-meta-item">
                                 <i data-lucide="calendar" class="icon-xs text-primary"></i>
-                                <span>Diperbarui {{ $ds['updated_at'] }}</span>
+                                <span>Rilis / Pemutakhiran: {{ $ds['metadata_modified'] }}</span>
+                            </div>
+
+                            <!-- Real download & portal action buttons -->
+                            <div class="dataset-actions-row">
+                                <a href="{{ $ds['primary_download_url'] }}" target="_blank" rel="noreferrer" class="btn-dataset-action btn-dataset-primary" title="Unduh File Resmi dari Server Pemkab Bangka">
+                                    <i data-lucide="download" class="icon-xs"></i>
+                                    <span>Unduh {{ $fmt }}</span>
+                                </a>
+                                <a href="{{ $ds['portal_url'] }}" target="_blank" rel="noreferrer" class="btn-dataset-action" title="Lihat Detail Metadata di satudata.bangka.go.id">
+                                    <i data-lucide="external-link" class="icon-xs"></i>
+                                    <span>Detail SDI</span>
+                                </a>
                             </div>
                         </div>
                     </div>
-                @endforeach
+                @empty
+                    <div class="dataset-card">
+                        <p class="text-muted-foreground">Memuat data dari API Satu Data Bangka...</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </section>
@@ -453,7 +480,7 @@
                 </div>
 
                 <div class="detail-box">
-                    <span class="detail-box-label">Data Historis 5 Tahun Terakhir (2024–2020)</span>
+                    <span class="detail-box-label">Data Historis Tren Berkala ({{ end($years) }}–{{ $years[0] }})</span>
                     <div class="history-grid" id="modal-history-grid">
                         <!-- Populated by JS -->
                     </div>

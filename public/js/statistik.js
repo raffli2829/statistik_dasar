@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const config = window.STATISTIK_CONFIG || {};
     let currentChartMode = 'area';
     let currentSectorId = config.selectedSector || 'kependudukan';
-    let currentYear = config.selectedYear || 2024;
+    let currentYear = config.selectedYear || (config.years && config.years[0]) || 2025;
     let currentWilayah = config.selectedWilayah || 'kabupaten';
     let currentTimeOrder = 'asc'; // Kronologis: 2020 -> 2024
     
@@ -76,7 +76,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             enabled: true,
                             displayColors: false,
                             callbacks: {
-                                label: (context) => `${context.raw} ${ind.unit}`
+                                label: (context) => {
+                                    const digits = ind.digits !== undefined ? ind.digits : ((ind.unit === 'Poin' || ind.unit === '%' || ind.unit === 'Km²' || (ind.unit && ind.unit.includes('Juta'))) ? 2 : 0);
+                                    return `${formatNumber(context.raw, digits)} ${ind.unit}`;
+                                }
                             }
                         }
                     },
@@ -199,7 +202,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         padding: 10,
                         boxPadding: 4,
                         callbacks: {
-                            label: (context) => ` ${sectorData.name}: ${formatNumber(context.raw, sectorData.column?.digits || 2)} ${sectorData.unit}`
+                            label: (context) => {
+                                const d = sectorData.digits !== undefined
+                                    ? sectorData.digits
+                                    : (currentWilayah !== 'kabupaten' ? (sectorData.column?.digits ?? 0) : (sectorData.column?.digits ?? 2));
+                                return ` ${sectorData.name}: ${formatNumber(context.raw, d)} ${sectorData.unit}`;
+                            }
                         }
                     }
                 },
@@ -210,7 +218,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     y: {
                         grid: { color: gridColor, drawBorder: false },
-                        ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 11 } }
+                        ticks: {
+                            color: textColor,
+                            font: { family: 'JetBrains Mono', size: 11 },
+                            callback: (val) => {
+                                if (Math.floor(val) === val) {
+                                    return val.toLocaleString('id-ID');
+                                }
+                                return val.toLocaleString('id-ID', { maximumFractionDigits: 1 });
+                            }
+                        }
                     }
                 }
             }
@@ -231,8 +248,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 copy.trend = kec.sector_trends[currentSectorId];
                 const pt = copy.trend.find(t => t.year === Number(currentYear));
                 copy.value = pt ? pt.value : (copy.trend[0]?.value || 0);
+
+                // Disesuaikan secara dinamis untuk Kecamatan
+                copy.unit = copy.column.unit;
+                copy.digits = copy.column.digits !== undefined ? copy.column.digits : 0;
+                if (copy.metadata) {
+                    copy.metadata.satuan = copy.column.unit;
+                }
+
+                // Hitung tren YoY
+                const prevPt = copy.trend.find(t => t.year === Number(currentYear) - 1);
+                if (pt && prevPt && prevPt.value !== 0) {
+                    if (copy.unit === '%' || copy.unit === 'Poin') {
+                        copy.yoy_change = Number((pt.value - prevPt.value).toFixed(2));
+                    } else {
+                        copy.yoy_change = Number((((pt.value - prevPt.value) / Math.abs(prevPt.value)) * 100).toFixed(2));
+                    }
+                }
             }
         } else {
+            // Level Kabupaten
+            copy.digits = copy.digits !== undefined 
+                ? copy.digits 
+                : (copy.unit === '%' || copy.unit === 'Poin' || copy.unit === 'Tahun' || (copy.unit && copy.unit.includes('Juta')) ? 2 : 0);
+
             if (copy.trend && copy.trend.length > 0) {
                 const pt = copy.trend.find(t => t.year === Number(currentYear));
                 if (pt) copy.value = pt.value;
@@ -293,7 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         indicators.forEach(ind => {
             const isGood = ind.lower_is_better ? (ind.yoy_change < 0) : (ind.yoy_change >= 0);
-            const digits = (ind.unit === 'Poin' || ind.unit === '%' || (ind.unit && ind.unit.includes('Juta'))) ? 2 : 0;
+            const digits = ind.digits !== undefined ? ind.digits : ((ind.unit === 'Poin' || ind.unit === '%' || ind.unit === 'Km²' || (ind.unit && ind.unit.includes('Juta'))) ? 2 : 0);
             
             let iconName = 'trending-up';
             if (ind.id.includes('ipm') || ind.id.includes('area') || ind.id.includes('tani')) iconName = 'graduation-cap';
@@ -410,13 +449,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const activeKec = (config.allKecamatan || []).find(k => k.id === currentWilayah);
         const wilayahLabel = activeKec ? `Kec. ${activeKec.name}` : 'Kabupaten Bangka';
+        const digits = sectorData.digits !== undefined 
+            ? sectorData.digits 
+            : (currentWilayah !== 'kabupaten' ? (sectorData.column?.digits ?? 0) : (sectorData.column?.digits ?? 2));
 
         if (elName) elName.textContent = sectorData.name;
         if (elProducer) elProducer.textContent = sectorData.metadata.produsen;
         if (elUnit) elUnit.textContent = sectorData.unit;
         if (elWilayah) elWilayah.textContent = wilayahLabel;
         if (elStat) {
-            elStat.textContent = `Thn ${currentYear}: ${formatNumber(sectorData.value, sectorData.column?.digits || 2)} ${sectorData.unit}`;
+            elStat.textContent = `Thn ${currentYear}: ${formatNumber(sectorData.value, digits)} ${sectorData.unit}`;
         }
         if (elTableLabel) elTableLabel.textContent = sectorData.column.label;
         if (elThMetric) elThMetric.textContent = `${sectorData.column.label} (${sectorData.column.unit})`;
@@ -431,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (elAnalysis) {
             const isPos = sectorData.yoy_change >= 0;
             const sign = sectorData.yoy_change > 0 ? '+' : '';
-            elAnalysis.innerHTML = `<strong>Analisis Tren:</strong> Indikator <strong>${sectorData.name}</strong> di <strong>${wilayahLabel}</strong> tercatat sebesar <strong>${formatNumber(sectorData.value, sectorData.column?.digits || 2)} ${sectorData.unit}</strong> pada tahun ${currentYear} dengan rujukan resmi ${sectorData.metadata.produsen}.`;
+            elAnalysis.innerHTML = `<strong>Analisis Tren:</strong> Indikator <strong>${sectorData.name}</strong> di <strong>${wilayahLabel}</strong> tercatat sebesar <strong>${formatNumber(sectorData.value, digits)} ${sectorData.unit}</strong> pada tahun ${currentYear} dengan rujukan resmi ${sectorData.metadata.produsen}.`;
         }
 
         // Re-render chart
@@ -805,79 +847,82 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ==========================================
+    // 11. Global Metadata Modal Handlers
+    // ==========================================
+    window.openMetadataModal = function(id) {
+        const modal = document.getElementById('modal-metadata');
+        if (!modal) return;
+
+        let indicator = null;
+
+        // Sektor Indicators (Gunakan getActiveSectorData agar relevan dengan wilayah yang dipilih!)
+        if (config.sectorIndicators && config.sectorIndicators[id]) {
+            indicator = getActiveSectorData();
+        }
+
+        // Cari di Headline Indicators
+        if (!indicator && config.headlineIndicators) {
+            indicator = config.headlineIndicators.find(i => i.id === id);
+        }
+
+        // Cari di Kecamatan KPI cards
+        if (!indicator && config.allKecamatan) {
+            config.allKecamatan.forEach(k => {
+                if (k.kpi_cards) {
+                    const found = k.kpi_cards.find(c => c.id === id);
+                    if (found) indicator = found;
+                }
+            });
+        }
+
+        if (!indicator) return;
+
+        const digits = indicator.digits !== undefined 
+            ? indicator.digits 
+            : ((indicator.unit === 'Poin' || indicator.unit === '%' || indicator.unit === 'Km²' || (indicator.unit && indicator.unit.includes('Juta'))) ? 2 : 0);
+
+        document.getElementById('modal-title').textContent = indicator.name;
+        document.getElementById('modal-stat').textContent = `Nilai Realisasi: ${formatNumber(indicator.value, digits)} ${indicator.unit} · Tahun ${currentYear}`;
+        document.getElementById('modal-producer').textContent = indicator.metadata ? indicator.metadata.produsen : 'BPS Kabupaten Bangka';
+        document.getElementById('modal-definition').textContent = indicator.metadata ? indicator.metadata.definisi : 'Indikator resmi statistik daerah.';
+        document.getElementById('modal-unit').textContent = indicator.metadata ? indicator.metadata.satuan : indicator.unit;
+        document.getElementById('modal-schedule').textContent = indicator.metadata ? indicator.metadata.jadwal_rilis : 'Tahunan';
+        document.getElementById('modal-methodology').textContent = indicator.metadata ? indicator.metadata.metodologi : 'Survei dan sensus resmi BPS.';
+
+        // Populate History Grid (Terurut dari tahun terbaru)
+        const historyGrid = document.getElementById('modal-history-grid');
+        if (historyGrid && indicator.trend) {
+            historyGrid.innerHTML = '';
+            const sortedTrend = [...indicator.trend].sort((a, b) => b.year - a.year);
+            sortedTrend.forEach(t => {
+                const cell = document.createElement('div');
+                cell.className = 'history-cell';
+                cell.innerHTML = `
+                    <div class="history-year font-mono">${t.year}</div>
+                    <div class="history-val font-mono">${formatNumber(t.value, digits)}</div>
+                `;
+                historyGrid.appendChild(cell);
+            });
+        }
+
+        modal.classList.add('open');
+        modal.setAttribute('aria-hidden', 'false');
+
+        if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.closeMetadataModal = function() {
+        const modal = document.getElementById('modal-metadata');
+        if (modal) {
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+        }
+    };
+
     // Initializations
     setupCustomDropdowns();
     initSparklines();
     initMainChart();
     updateThemeIcon();
 });
-
-// ==========================================
-// 11. Global Metadata Modal Handlers
-// ==========================================
-window.openMetadataModal = function(id) {
-    const modal = document.getElementById('modal-metadata');
-    if (!modal) return;
-
-    const config = window.STATISTIK_CONFIG || {};
-    let indicator = null;
-
-    // Cari di Headline Indicators
-    if (config.headlineIndicators) {
-        indicator = config.headlineIndicators.find(i => i.id === id);
-    }
-
-    // Cari di Sektor Indicators
-    if (!indicator && config.sectorIndicators && config.sectorIndicators[id]) {
-        indicator = config.sectorIndicators[id];
-    }
-
-    // Cari di Kecamatan KPI cards
-    if (!indicator && config.allKecamatan) {
-        config.allKecamatan.forEach(k => {
-            if (k.kpi_cards) {
-                const found = k.kpi_cards.find(c => c.id === id);
-                if (found) indicator = found;
-            }
-        });
-    }
-
-    if (!indicator) return;
-
-    document.getElementById('modal-title').textContent = indicator.name;
-    document.getElementById('modal-stat').textContent = `Nilai Realisasi: ${indicator.value} ${indicator.unit} · Tahun ${config.selectedYear || 2024}`;
-    document.getElementById('modal-producer').textContent = indicator.metadata ? indicator.metadata.produsen : 'BPS Kabupaten Bangka';
-    document.getElementById('modal-definition').textContent = indicator.metadata ? indicator.metadata.definisi : 'Indikator resmi statistik daerah.';
-    document.getElementById('modal-unit').textContent = indicator.metadata ? indicator.metadata.satuan : indicator.unit;
-    document.getElementById('modal-schedule').textContent = indicator.metadata ? indicator.metadata.jadwal_rilis : 'Tahunan';
-    document.getElementById('modal-methodology').textContent = indicator.metadata ? indicator.metadata.metodologi : 'Survei dan sensus resmi BPS.';
-
-    // Populate History Grid (Terurut dari tahun terbaru)
-    const historyGrid = document.getElementById('modal-history-grid');
-    if (historyGrid && indicator.trend) {
-        historyGrid.innerHTML = '';
-        const sortedTrend = [...indicator.trend].sort((a, b) => b.year - a.year);
-        sortedTrend.forEach(t => {
-            const cell = document.createElement('div');
-            cell.className = 'history-cell';
-            cell.innerHTML = `
-                <div class="history-year font-mono">${t.year}</div>
-                <div class="history-val font-mono">${t.value}</div>
-            `;
-            historyGrid.appendChild(cell);
-        });
-    }
-
-    modal.classList.add('open');
-    modal.setAttribute('aria-hidden', 'false');
-
-    if (window.lucide) window.lucide.createIcons();
-};
-
-window.closeMetadataModal = function() {
-    const modal = document.getElementById('modal-metadata');
-    if (modal) {
-        modal.classList.remove('open');
-        modal.setAttribute('aria-hidden', 'true');
-    }
-};
