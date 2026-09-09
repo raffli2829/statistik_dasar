@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\SatuDataService;
+use App\Services\StatistikDataService;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -11,10 +12,10 @@ class StatistikController extends Controller
     /**
      * Menampilkan halaman sub-modul Statistik Dasar Pemerintah Kabupaten Bangka.
      */
-    public function index(Request $request, SatuDataService $satuDataService)
+    public function index(Request $request, SatuDataService $satuDataService, StatistikDataService $statistikService)
     {
-        $years = config('statistik.years');
-        $defaultYear = config('statistik.default_year');
+        $years = $statistikService->getYears();
+        $defaultYear = $statistikService->getDefaultYear();
         $selectedYear = (int) $request->get('tahun', $defaultYear);
         if (! in_array($selectedYear, $years)) {
             $selectedYear = $defaultYear;
@@ -24,8 +25,8 @@ class StatistikController extends Controller
         $selectedSector = $request->get('sektor', 'kependudukan');
 
         $allKecamatan = config('statistik.kecamatan');
-        $sectors = config('statistik.sectors');
-        $sectorIndicators = config('statistik.sector_indicators');
+        $sectors = $statistikService->getSectors();
+        $sectorIndicators = $statistikService->getSectorIndicatorsMap();
 
         // Ambil dataset riil live langsung dari CKAN API satudata.bangka.go.id sesuai tahun terpilih
         $featuredDatasets = $satuDataService->getDatasets(6, (string) $selectedYear);
@@ -49,48 +50,14 @@ class StatistikController extends Controller
             }
         }
 
-        // Tentukan 4 Headline Indicators: Kabupaten vs Kecamatan
-        if ($activeKecamatan && isset($activeKecamatan['kpi_cards'])) {
-            $headlineIndicators = $activeKecamatan['kpi_cards'];
-        } else {
-            $headlineIndicators = config('statistik.headline_indicators');
-        }
+        // Tentukan 4 Headline Indicators: Kabupaten vs Kecamatan (dari Database via StatistikDataService)
+        $headlineIndicators = $statistikService->getHeadlineIndicators($selectedYear, $selectedWilayah);
 
-        // Tentukan data sektor terpilih: Kabupaten vs Kecamatan
-        $currentSector = $sectorIndicators[$selectedSector];
-        if ($activeKecamatan && isset($activeKecamatan['sector_trends'][$selectedSector])) {
-            $kecTrend = $activeKecamatan['sector_trends'][$selectedSector];
-            // cari value tahun terpilih
-            $trendPoint = collect($kecTrend)->firstWhere('year', $selectedYear);
-            $val = $trendPoint ? $trendPoint['value'] : ($kecTrend[0]['value'] ?? 0);
+        // Tentukan data sektor terpilih: Kabupaten vs Kecamatan (dari Database via StatistikDataService)
+        $currentSector = $statistikService->getSectorIndicator($selectedSector, $selectedYear, $selectedWilayah);
 
-            $currentSector['name'] = "{$currentSector['column']['label']} Kec. {$activeKecamatan['name']}";
-            $currentSector['value'] = $val;
-            $currentSector['trend'] = $kecTrend;
-            $currentSector['unit'] = $currentSector['column']['unit'];
-            $currentSector['digits'] = $currentSector['column']['digits'] ?? 0;
-            if (isset($currentSector['metadata'])) {
-                $currentSector['metadata']['satuan'] = $currentSector['column']['unit'];
-            }
-        } else {
-            $currentSector['digits'] = $currentSector['digits'] ?? ($currentSector['unit'] === '%' || $currentSector['unit'] === 'Poin' || $currentSector['unit'] === 'Tahun' || str_contains($currentSector['unit'], 'Juta') ? 2 : 0);
-        }
-
-        // Hitung nilai kecamatan untuk tabel
-        $kecamatanList = collect($allKecamatan)->map(function ($k) use ($selectedSector, $selectedYear, $sectorIndicators) {
-            $colKey = $sectorIndicators[$selectedSector]['column']['key'];
-
-            // Ambil dari sector_trends jika ada
-            if (isset($k['sector_trends'][$selectedSector])) {
-                $p = collect($k['sector_trends'][$selectedSector])->firstWhere('year', $selectedYear);
-                $k['current_value'] = $p ? $p['value'] : ($k[$colKey] ?? 0);
-            } else {
-                $k['current_value'] = $k[$colKey] ?? 0;
-            }
-
-            return $k;
-        });
-
+        // Hitung nilai kecamatan untuk tabel dari Database
+        $kecamatanList = $statistikService->getKecamatanList($selectedSector, $selectedYear);
         $maxVal = $kecamatanList->max('current_value') ?: 1;
 
         return view('statistik.index', [
@@ -114,34 +81,14 @@ class StatistikController extends Controller
     /**
      * API JSON untuk data tren sektoral (mendukung filter kecamatan & tahun).
      */
-    public function getSectorData(Request $request, string $id)
+    public function getSectorData(Request $request, string $id, StatistikDataService $statistikService)
     {
-        $sectorIndicators = config('statistik.sector_indicators');
-        if (! isset($sectorIndicators[$id])) {
-            return response()->json(['error' => 'Sektor tidak ditemukan'], 404);
-        }
-
-        $data = $sectorIndicators[$id];
         $wilayah = $request->get('wilayah', 'kabupaten');
-        $tahun = (int) $request->get('tahun', config('statistik.default_year'));
+        $tahun = (int) $request->get('tahun', $statistikService->getDefaultYear());
 
-        if ($wilayah !== 'kabupaten') {
-            $allKecamatan = config('statistik.kecamatan');
-            $kec = collect($allKecamatan)->firstWhere('id', $wilayah);
-            if ($kec && isset($kec['sector_trends'][$id])) {
-                $data['name'] = "{$data['column']['label']} Kec. {$kec['name']}";
-                $data['trend'] = $kec['sector_trends'][$id];
-                $point = collect($data['trend'])->firstWhere('year', $tahun);
-                $data['value'] = $point ? $point['value'] : ($data['trend'][0]['value'] ?? 0);
-                $data['kecamatan'] = $kec['name'];
-                $data['unit'] = $data['column']['unit'];
-                $data['digits'] = $data['column']['digits'] ?? 0;
-                if (isset($data['metadata'])) {
-                    $data['metadata']['satuan'] = $data['column']['unit'];
-                }
-            }
-        } else {
-            $data['digits'] = $data['digits'] ?? ($data['unit'] === '%' || $data['unit'] === 'Poin' || $data['unit'] === 'Tahun' || str_contains($data['unit'], 'Juta') ? 2 : 0);
+        $data = $statistikService->getSectorIndicator($id, $tahun, $wilayah);
+        if (empty($data)) {
+            return response()->json(['error' => 'Sektor tidak ditemukan'], 404);
         }
 
         return response()->json($data);
@@ -150,28 +97,18 @@ class StatistikController extends Controller
     /**
      * API JSON untuk data kecamatan.
      */
-    public function getKecamatanData(Request $request)
+    public function getKecamatanData(Request $request, StatistikDataService $statistikService)
     {
-        $allKecamatan = config('statistik.kecamatan');
         $sektor = $request->get('sektor', 'kependudukan');
-        $tahun = (int) $request->get('tahun', config('statistik.default_year'));
-        $sectorIndicators = config('statistik.sector_indicators');
-        $colKey = $sectorIndicators[$sektor]['column']['key'] ?? 'population';
+        $tahun = (int) $request->get('tahun', $statistikService->getDefaultYear());
 
-        $data = collect($allKecamatan)->map(function ($k) use ($sektor, $tahun, $colKey) {
-            $val = $k[$colKey] ?? 0;
-            if (isset($k['sector_trends'][$sektor])) {
-                $p = collect($k['sector_trends'][$sektor])->firstWhere('year', $tahun);
-                if ($p) {
-                    $val = $p['value'];
-                }
-            }
-
+        $list = $statistikService->getKecamatanList($sektor, $tahun);
+        $data = $list->map(function ($k) {
             return [
                 'id' => $k['id'],
                 'name' => $k['name'],
                 'capital' => $k['capital'],
-                'value' => round($val, 2),
+                'value' => round($k['current_value'] ?? 0, 2),
                 'area_km2' => $k['area_km2'],
                 'density' => $k['density'],
             ];
@@ -183,30 +120,23 @@ class StatistikController extends Controller
     /**
      * Ekspor data kecamatan ke format CSV.
      */
-    public function downloadCsv(string $sektor, int $tahun)
+    public function downloadCsv(string $sektor, int $tahun, StatistikDataService $statistikService)
     {
-        $sectorIndicators = config('statistik.sector_indicators');
-        $currentSector = $sectorIndicators[$sektor] ?? $sectorIndicators['kependudukan'];
-        $allKecamatan = config('statistik.kecamatan');
+        $currentSector = $statistikService->getSectorIndicator($sektor, $tahun, 'kabupaten');
+        $kecamatanList = $statistikService->getKecamatanList($sektor, $tahun);
         $col = $currentSector['column'];
 
         $filename = "satudata-bangka-{$sektor}-{$tahun}.csv";
 
-        return new StreamedResponse(function () use ($allKecamatan, $currentSector, $col, $tahun, $sektor) {
+        return new StreamedResponse(function () use ($kecamatanList, $currentSector, $col, $tahun) {
             $handle = fopen('php://output', 'w');
             fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
             fputcsv($handle, ['Peringkat', 'Kecamatan', 'Ibu Kota Kecamatan', "{$col['label']} ({$col['unit']})", 'Luas Wilayah (Km²)', 'Tahun', 'Wilayah', 'Produsen Data']);
 
             $rank = 1;
-            foreach ($allKecamatan as $k) {
-                $val = $k[$col['key']] ?? 0;
-                if (isset($k['sector_trends'][$sektor])) {
-                    $p = collect($k['sector_trends'][$sektor])->firstWhere('year', $tahun);
-                    if ($p) {
-                        $val = $p['value'];
-                    }
-                }
+            foreach ($kecamatanList as $k) {
+                $val = $k['current_value'] ?? 0;
 
                 fputcsv($handle, [
                     $rank++,
@@ -230,11 +160,10 @@ class StatistikController extends Controller
     /**
      * Ekspor data lengkap ke format JSON.
      */
-    public function downloadJson(string $sektor, int $tahun)
+    public function downloadJson(string $sektor, int $tahun, StatistikDataService $statistikService)
     {
-        $sectorIndicators = config('statistik.sector_indicators');
-        $currentSector = $sectorIndicators[$sektor] ?? $sectorIndicators['kependudukan'];
-        $allKecamatan = config('statistik.kecamatan');
+        $currentSector = $statistikService->getSectorIndicator($sektor, $tahun, 'kabupaten');
+        $kecamatanList = $statistikService->getKecamatanList($sektor, $tahun);
         $col = $currentSector['column'];
 
         $payload = [
@@ -247,20 +176,12 @@ class StatistikController extends Controller
             'tahun' => $tahun,
             'metadata' => $currentSector['metadata'],
             'tanggal_unduh' => now()->toIso8601String(),
-            'data_kecamatan' => collect($allKecamatan)->map(function ($k, $idx) use ($col, $sektor, $tahun) {
-                $val = $k[$col['key']] ?? 0;
-                if (isset($k['sector_trends'][$sektor])) {
-                    $p = collect($k['sector_trends'][$sektor])->firstWhere('year', $tahun);
-                    if ($p) {
-                        $val = $p['value'];
-                    }
-                }
-
+            'data_kecamatan' => $kecamatanList->map(function ($k, $idx) use ($col) {
                 return [
                     'peringkat' => $idx + 1,
                     'nama_kecamatan' => $k['name'],
                     'ibu_kota' => $k['capital'],
-                    'nilai' => $val,
+                    'nilai' => $k['current_value'] ?? 0,
                     'satuan' => $col['unit'],
                     'luas_wilayah_km2' => $k['area_km2'],
                 ];

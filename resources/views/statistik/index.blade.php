@@ -9,7 +9,7 @@
         <div class="container">
             <div class="hero-wrapper">
                 <!-- Breadcrumb -->
-                <nav class="breadcrumb" aria-label="Breadcrumb">
+                <nav class="breadcrumb" aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 8px;">
                     <a href="https://satudata.bangka.go.id" class="breadcrumb-link" target="_blank" rel="noreferrer">Beranda</a>
                     <span class="breadcrumb-sep">/</span>
                     <span class="breadcrumb-item">Sektoral</span>

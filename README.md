@@ -21,6 +21,10 @@ Data statistik makro, sektoral, dan kewilayahan bersumber resmi dari:
 
 ## 🚀 Fitur Utama
 
+- **Panel Admin Terproteksi (`/admin`)**: Manajemen data indikator makro, data 8 kecamatan, dan tren tahunan langsung dari antarmuka web yang modern.
+- **Sistem Data Dinamis Berbasis Database**: Seluruh data indikator tersimpan di database (SQLite / MySQL) dan langsung terhubung dinamis ke halaman publik serta API internal.
+- **Import Massal Berkas CSV**: Fitur unggah file CSV untuk pembaruan cepat ratusan titik data indikator dan kecamatan, dilengkapi tombol unduh format template.
+- **Sinkronisasi Langsung CKAN API**: Terintegrasi dinamis ke API Satu Data Pemkab Bangka (`manajemen-satudata.bangka.go.id`) untuk memuat berkas unduhan publik secara *live*.
 - **Sub-Modul Bersih Tanpa Duplikasi Layout**: Tanpa header/footer portal berlebih, siap diintegrasikan sebagai sub-halaman di `satudata.bangka.go.id`.
 - **Tema Warna Merah Resmi**: Menggunakan palet merah brand Satu Data Bangka (`#DC2626` / `#E11D48`).
 - **4 Headline KPI Cards**: Dilengkapi mini sparkline canvas dan indikator *YoY trend change*.
@@ -28,6 +32,14 @@ Data statistik makro, sektoral, dan kewilayahan bersumber resmi dari:
 - **Matriks 8 Kecamatan**: Data spasial Sungailiat, Belinyu, Mendo Barat, Pemali, Merawang, Riau Silip, Puding Besar, dan Bakam dengan live search, sorting kolom, bar proporsi, dan ekspor **CSV** & **JSON**.
 - **Drawer Metadata SDI**: Definisi operasional indikator, produsen data, satuan ukur, jadwal rilis, metodologi, dan data historis 5 tahun.
 - **Mode Gelap / Terang**: Dukungan dark mode dengan persistensi tema.
+
+---
+
+## 🔐 Kredensial Akses Panel Admin
+
+* **URL Login Admin**: `http://127.0.0.1:8000/admin/login`
+* **Email**: `admin@bangka.go.id`
+* **Kata Sandi**: `adminbangka2025`
 
 ---
 
