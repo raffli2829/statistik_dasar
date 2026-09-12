@@ -8,14 +8,6 @@
     <section class="hero-section">
         <div class="container">
             <div class="hero-wrapper">
-                <!-- Breadcrumb -->
-                <nav class="breadcrumb" aria-label="Breadcrumb" style="display: flex; align-items: center; gap: 8px;">
-                    <a href="https://satudata.bangka.go.id" class="breadcrumb-link" target="_blank" rel="noreferrer">Beranda</a>
-                    <span class="breadcrumb-sep">/</span>
-                    <span class="breadcrumb-item">Sektoral</span>
-                    <span class="breadcrumb-sep">/</span>
-                    <span class="breadcrumb-current">Statistik Dasar</span>
-                </nav>
 
                 <div class="hero-text-block">
                     <h1 class="hero-title">
@@ -30,34 +22,6 @@
 
                 <!-- Filter Controls -->
                 <div class="filter-toolbar">
-                    <!-- Filter Tahun (5 Tahun Terakhir: 2024 - 2020) -->
-                    <div class="filter-pill dropdown-pill" id="pill-year">
-                        <i data-lucide="calendar" class="icon-sm text-primary"></i>
-                        <span class="filter-label">Tahun:</span>
-                        <div class="theme-dropdown" id="dropdown-year">
-                            <button type="button" class="theme-dropdown-trigger font-mono" id="trigger-year" aria-haspopup="listbox" aria-expanded="false" title="Pilih Tahun Data">
-                                <span class="dropdown-trigger-label" id="label-year">{{ $selectedYear }}</span>
-                                <i data-lucide="chevron-down" class="icon-xs dropdown-chevron"></i>
-                            </button>
-                            <div class="theme-dropdown-menu" id="menu-year" role="listbox">
-                                @foreach($years as $y)
-                                    <div class="theme-dropdown-item font-mono {{ $selectedYear == $y ? 'is-active' : '' }}" 
-                                         role="option" 
-                                         data-value="{{ $y }}"
-                                         aria-selected="{{ $selectedYear == $y ? 'true' : 'false' }}">
-                                        <span>{{ $y }}</span>
-                                        <i data-lucide="check" class="icon-xs item-check-icon {{ $selectedYear == $y ? '' : 'hidden' }}"></i>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                        <select id="select-year" class="filter-select-hidden" aria-hidden="true" tabindex="-1">
-                            @foreach($years as $y)
-                                <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>{{ $y }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
                     <!-- Filter Wilayah (Kabupaten vs 8 Kecamatan) -->
                     <div class="filter-pill dropdown-pill" id="pill-wilayah">
                         <i data-lucide="map-pin" class="icon-sm text-primary"></i>
@@ -94,10 +58,6 @@
                         </select>
                     </div>
 
-                    <!-- Theme Toggle -->
-                    <button type="button" id="btn-theme" class="btn-icon btn-pill" title="Ubah Mode Gelap / Terang">
-                        <i data-lucide="moon" class="icon-sm" id="theme-icon"></i>
-                    </button>
                 </div>
 
                 <!-- Info Banner Kecamatan Terpilih (Jika Kecamatan Dipilih) -->
@@ -172,7 +132,7 @@
     </section>
 
     <!-- 2. RUANG KERJA STATISTIK SEKTORAL -->
-    <section class="sektoral-section">
+    <section class="sektoral-section" id="sektoral">
         <div class="container">
             <div class="section-header">
                 <div>
@@ -183,6 +143,74 @@
                     <p class="section-desc">
                         Tren perkembangan deret waktu berkala ({{ end($years) }}–{{ $years[0] }}) menurut bidang urusan pemerintahan resmi BPS Kabupaten Bangka.
                     </p>
+                </div>
+            </div>
+
+            <!-- Sektoral Controls Toolbar: Sektor & Tahun (Tanggal) Side-by-Side -->
+            @php
+                $activeSectorInfo = collect($sectors)->firstWhere('id', $selectedSector) ?? ($sectors[0] ?? null);
+            @endphp
+            <div class="sektoral-controls-bar">
+                <div class="sektoral-filters-group">
+                    <!-- Dropdown Sektor (Bidang Urusan) -->
+                    <div class="filter-pill dropdown-pill" id="pill-sektor">
+                        <i data-lucide="{{ $activeSectorInfo['icon'] ?? 'layers' }}" class="icon-sm text-primary" id="icon-filter-sektor"></i>
+                        <span class="filter-label">Sektor:</span>
+                        <div class="theme-dropdown" id="dropdown-sektor">
+                            <button type="button" class="theme-dropdown-trigger" id="trigger-sektor" aria-haspopup="listbox" aria-expanded="false" title="Pilih Bidang Urusan Sektoral">
+                                <span class="dropdown-trigger-label" id="label-sektor">{{ $activeSectorInfo['label'] ?? 'Kependudukan' }}</span>
+                                <i data-lucide="chevron-down" class="icon-xs dropdown-chevron"></i>
+                            </button>
+                            <div class="theme-dropdown-menu menu-wide" id="menu-sektor" role="listbox">
+                                @foreach($sectors as $s)
+                                    <div class="theme-dropdown-item {{ $selectedSector == $s['id'] ? 'is-active' : '' }}" 
+                                         role="option" 
+                                         data-value="{{ $s['id'] }}"
+                                         data-icon="{{ $s['icon'] }}"
+                                         aria-selected="{{ $selectedSector == $s['id'] ? 'true' : 'false' }}">
+                                        <div class="item-label-group">
+                                            <i data-lucide="{{ $s['icon'] }}" class="icon-xs"></i>
+                                            <span>{{ $s['label'] }}</span>
+                                        </div>
+                                        <i data-lucide="check" class="icon-xs item-check-icon {{ $selectedSector == $s['id'] ? '' : 'hidden' }}"></i>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <select id="select-sektor" class="filter-select-hidden" aria-hidden="true" tabindex="-1">
+                            @foreach($sectors as $s)
+                                <option value="{{ $s['id'] }}" {{ $selectedSector == $s['id'] ? 'selected' : '' }}>{{ $s['label'] }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Dropdown Tahun (Tanggal) Dipindahkan ke Samping Sektor -->
+                    <div class="filter-pill dropdown-pill" id="pill-year">
+                        <i data-lucide="calendar" class="icon-sm text-primary"></i>
+                        <span class="filter-label">Tahun:</span>
+                        <div class="theme-dropdown" id="dropdown-year">
+                            <button type="button" class="theme-dropdown-trigger font-mono" id="trigger-year" aria-haspopup="listbox" aria-expanded="false" title="Pilih Tahun Data">
+                                <span class="dropdown-trigger-label" id="label-year">{{ $selectedYear }}</span>
+                                <i data-lucide="chevron-down" class="icon-xs dropdown-chevron"></i>
+                            </button>
+                            <div class="theme-dropdown-menu" id="menu-year" role="listbox">
+                                @foreach($years as $y)
+                                    <div class="theme-dropdown-item font-mono {{ $selectedYear == $y ? 'is-active' : '' }}" 
+                                         role="option" 
+                                         data-value="{{ $y }}"
+                                         aria-selected="{{ $selectedYear == $y ? 'true' : 'false' }}">
+                                        <span>{{ $y }}</span>
+                                        <i data-lucide="check" class="icon-xs item-check-icon {{ $selectedYear == $y ? '' : 'hidden' }}"></i>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <select id="select-year" class="filter-select-hidden" aria-hidden="true" tabindex="-1">
+                            @foreach($years as $y)
+                                <option value="{{ $y }}" {{ $selectedYear == $y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Mode Switcher (Area / Line / Bar) -->
@@ -200,16 +228,6 @@
                         <span>Batang</span>
                     </button>
                 </div>
-            </div>
-
-            <!-- Sektor Navigation Tabs -->
-            <div class="sektoral-tabs">
-                @foreach($sectors as $s)
-                    <button type="button" class="sektor-tab-btn {{ $selectedSector == $s['id'] ? 'active' : '' }}" data-sector="{{ $s['id'] }}">
-                        <i data-lucide="{{ $s['icon'] }}" class="icon-sm"></i>
-                        <span>{{ $s['label'] }}</span>
-                    </button>
-                @endforeach
             </div>
 
             <!-- Sektoral Chart Card -->
@@ -486,9 +504,9 @@
                     </div>
                 </div>
 
-                <a href="https://bangkakab.bps.go.id" target="_blank" rel="noreferrer" class="btn-primary btn-block">
-                    <span>Lihat di Portal BPS Kabupaten Bangka</span>
-                    <i data-lucide="external-link" class="icon-xs"></i>
+                <a href="{{ route('publikasi.statistik-sektoral-opd') }}" class="btn-primary btn-block">
+                    <span>Lihat Publikasi Sektoral Terkait</span>
+                    <i data-lucide="arrow-right" class="icon-xs"></i>
                 </a>
             </div>
         </div>
@@ -502,6 +520,7 @@
         selectedYear: {{ $selectedYear }},
         selectedWilayah: "{{ $selectedWilayah }}",
         selectedSector: "{{ $selectedSector }}",
+        sectors: @json($sectors),
         headlineIndicators: @json($headlineIndicators),
         kabupatenHeadlines: @json(config('statistik.headline_indicators')),
         sectorIndicators: @json($sectorIndicators),

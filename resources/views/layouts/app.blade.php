@@ -45,6 +45,8 @@
 
     <!-- Main Content Container -->
     <div class="min-h-screen flex flex-col">
+        @include('layouts.navbar')
+
         <main id="main-content" class="flex-1">
             @yield('content')
         </main>
@@ -52,9 +54,95 @@
 
     <!-- Custom JS -->
     <script src="{{ asset('js/statistik.js') }}"></script>
+    <script src="{{ asset('js/publikasi.js') }}"></script>
     <script>
         // Initialize Lucide Icons
-        lucide.createIcons();
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
+        // Global Topbar Interactivity
+        document.addEventListener('DOMContentLoaded', () => {
+            // Theme switcher
+            const topbarThemeBtn = document.getElementById('topbar-theme-toggle');
+            const topbarThemeIcon = document.getElementById('topbar-theme-icon');
+
+            function syncThemeIcon() {
+                const isDark = document.documentElement.classList.contains('dark');
+                if (topbarThemeIcon) {
+                    topbarThemeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+                }
+                const pageThemeIcon = document.getElementById('theme-icon');
+                if (pageThemeIcon) {
+                    pageThemeIcon.setAttribute('data-lucide', isDark ? 'sun' : 'moon');
+                }
+                if (window.lucide) lucide.createIcons();
+            }
+
+            if (topbarThemeBtn) {
+                topbarThemeBtn.addEventListener('click', () => {
+                    const isDark = document.documentElement.classList.toggle('dark');
+                    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                    syncThemeIcon();
+
+                    // If chart instances exist, trigger refresh
+                    if (window.dispatchEvent) {
+                        window.dispatchEvent(new CustomEvent('theme-changed', { detail: { isDark } }));
+                    }
+                });
+            }
+
+            syncThemeIcon();
+
+            // Mobile menu toggle
+            const mobileBtn = document.getElementById('mobile-menu-toggle');
+            const mobileDrawer = document.getElementById('mobile-menu-drawer');
+            const mobileIcon = document.getElementById('mobile-menu-icon');
+
+            if (mobileBtn && mobileDrawer) {
+                mobileBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isOpen = mobileDrawer.classList.toggle('is-open');
+                    mobileBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    if (mobileIcon) {
+                        mobileIcon.setAttribute('data-lucide', isOpen ? 'x' : 'menu');
+                        if (window.lucide) lucide.createIcons();
+                    }
+                });
+
+                // Close drawer on click outside
+                document.addEventListener('click', (e) => {
+                    if (!mobileDrawer.contains(e.target) && !mobileBtn.contains(e.target)) {
+                        mobileDrawer.classList.remove('is-open');
+                        mobileBtn.setAttribute('aria-expanded', 'false');
+                        if (mobileIcon) {
+                            mobileIcon.setAttribute('data-lucide', 'menu');
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    }
+                });
+            }
+
+            // Allow clicking Publikasi to navigate directly to /publikasi
+            // Hover opens the mega menu via CSS, but clicking navigates to the page
+            const navDropdown = document.getElementById('nav-dropdown-publikasi');
+            const btnDropdown = document.getElementById('btn-dropdown-publikasi');
+            if (btnDropdown) {
+                btnDropdown.addEventListener('click', (e) => {
+                    const targetHref = btnDropdown.getAttribute('href');
+                    if (targetHref && targetHref !== '#') {
+                        window.location.href = targetHref;
+                    }
+                });
+            }
+            if (navDropdown) {
+                document.addEventListener('click', (e) => {
+                    if (!navDropdown.contains(e.target)) {
+                        navDropdown.classList.remove('is-open');
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

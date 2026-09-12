@@ -422,12 +422,51 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 4. Update Tampilan Sektor & Chart
     // ==========================================
+    function syncSektorDropdown(sectorId) {
+        const ddSektor = document.getElementById('dropdown-sektor');
+        if (!ddSektor) return;
+        const items = ddSektor.querySelectorAll('.theme-dropdown-item');
+        let labelText = 'Kependudukan';
+        let iconName = 'users';
+
+        items.forEach(i => {
+            const val = i.getAttribute('data-value');
+            const isMatch = (val === sectorId);
+            i.classList.toggle('is-active', isMatch);
+            i.setAttribute('aria-selected', isMatch ? 'true' : 'false');
+            const check = i.querySelector('.item-check-icon');
+            if (check) check.classList.toggle('hidden', !isMatch);
+            if (isMatch) {
+                labelText = i.querySelector('span')?.textContent || labelText;
+                iconName = i.getAttribute('data-icon') || iconName;
+            }
+        });
+
+        const label = ddSektor.querySelector('.dropdown-trigger-label');
+        if (label) label.textContent = labelText;
+
+        const filterIcon = document.getElementById('icon-filter-sektor');
+        if (filterIcon) {
+            filterIcon.setAttribute('data-lucide', iconName);
+            if (window.lucide) lucide.createIcons();
+        }
+
+        const chartIcon = document.getElementById('current-sector-icon');
+        if (chartIcon) {
+            chartIcon.setAttribute('data-lucide', iconName);
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+
     function switchSector(sectorId) {
         currentSectorId = sectorId;
         const sectorData = getActiveSectorData();
         if (!sectorData) return;
 
-        // Update Tab active state
+        // Sync Sektor Dropdown state & icon
+        syncSektorDropdown(sectorId);
+
+        // Update Tab active state (fallback if present)
         document.querySelectorAll('.sektor-tab-btn').forEach(btn => {
             if (btn.getAttribute('data-sector') === sectorId) {
                 btn.classList.add('active');
@@ -670,7 +709,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const menu = dd.querySelector('.theme-dropdown-menu');
             const items = dd.querySelectorAll('.theme-dropdown-item');
             const pill = dd.closest('.filter-pill');
-            const selectId = dd.id === 'dropdown-year' ? 'select-year' : 'select-wilayah';
+            let selectId = 'select-wilayah';
+            if (dd.id === 'dropdown-year') {
+                selectId = 'select-year';
+            } else if (dd.id === 'dropdown-sektor') {
+                selectId = 'select-sektor';
+            }
             const nativeSelect = document.getElementById(selectId);
 
             if (!trigger || !menu) return;
@@ -707,9 +751,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const check = item.querySelector('.item-check-icon');
                     if (check) check.classList.remove('hidden');
 
-                    // Update trigger text
+                    // Update trigger text & icon
                     const itemText = item.querySelector('span')?.textContent || val;
                     if (labelSpan) labelSpan.textContent = itemText;
+
+                    const itemIcon = item.getAttribute('data-icon');
+                    if (dd.id === 'dropdown-sektor' && itemIcon) {
+                        const filterIcon = document.getElementById('icon-filter-sektor');
+                        if (filterIcon) {
+                            filterIcon.setAttribute('data-lucide', itemIcon);
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    }
 
                     // Close dropdown
                     closeAllDropdowns();
@@ -804,6 +857,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const selectSektor = document.getElementById('select-sektor');
+    if (selectSektor) {
+        selectSektor.addEventListener('change', (e) => {
+            switchSector(e.target.value);
+        });
+    }
+
     window.resetToKabupaten = function() {
         if (selectWilayah) {
             selectWilayah.value = 'kabupaten';
@@ -834,6 +894,13 @@ document.addEventListener('DOMContentLoaded', () => {
             initSparklines();
         });
     }
+
+    // Listen to theme changes from topbar navbar
+    window.addEventListener('theme-changed', () => {
+        updateThemeIcon();
+        initMainChart();
+        initSparklines();
+    });
 
     // ==========================================
     // Helper Format Number
@@ -922,6 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initializations
     setupCustomDropdowns();
+    syncSektorDropdown(currentSectorId);
     initSparklines();
     initMainChart();
     updateThemeIcon();
