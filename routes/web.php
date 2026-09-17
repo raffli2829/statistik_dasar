@@ -16,7 +16,9 @@ Route::get('/statistik-dasar', [StatistikController::class, 'index'])->name('sta
 Route::prefix('publikasi')->name('publikasi.')->group(function () {
     Route::redirect('/', '/publikasi/berita')->name('index');
     Route::get('/berita', [PublikasiController::class, 'berita'])->name('berita');
+    Route::get('/berita/{id}', [PublikasiController::class, 'beritaDetail'])->name('berita.detail');
     Route::get('/artikel', [PublikasiController::class, 'artikel'])->name('artikel');
+    Route::get('/artikel/{id}', [PublikasiController::class, 'artikelDetail'])->name('artikel.detail');
     Route::get('/infografis', [PublikasiController::class, 'infografis'])->name('infografis');
     Route::get('/statistik-sektoral-opd', [PublikasiController::class, 'statistikSektoralOpd'])->name('statistik-sektoral-opd');
     Route::get('/statistik-sektoral-kabupaten', [PublikasiController::class, 'statistikSektoralKabupaten'])->name('statistik-sektoral-kabupaten');

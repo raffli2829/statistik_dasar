@@ -133,13 +133,31 @@
                                     <i data-lucide="maximize-2" class="icon-xs"></i>
                                     <span>Pratinjau</span>
                                 </button>
-                                <button type="button" 
-                                        class="btn-icon-subtle btn-download-infografis" 
-                                        title="Unduh Lembar Infografis"
-                                        data-title="{{ $item['judul'] }}"
-                                        data-id="{{ $item['id'] }}">
-                                    <i data-lucide="download" class="icon-xs"></i>
-                                </button>
+                                <div class="pub-dropdown-wrap">
+                                    <button type="button" 
+                                            class="btn-icon-subtle btn-download-dropdown-toggle" 
+                                            title="Opsi Unduh Infografis"
+                                            aria-haspopup="true"
+                                            aria-expanded="false">
+                                        <i data-lucide="download" class="icon-xs"></i>
+                                    </button>
+                                    <div class="pub-dropdown-menu">
+                                        <button type="button" 
+                                                class="pub-dropdown-item btn-card-download-png" 
+                                                data-id="{{ $item['id'] }}" 
+                                                data-title="{{ $item['judul'] }}">
+                                            <i data-lucide="image" class="icon-xs text-primary"></i>
+                                            <span>Unduh Gambar (PNG)</span>
+                                        </button>
+                                        <button type="button" 
+                                                class="pub-dropdown-item btn-card-download-pdf" 
+                                                data-id="{{ $item['id'] }}" 
+                                                data-title="{{ $item['judul'] }}">
+                                            <i data-lucide="file-down" class="icon-xs text-danger"></i>
+                                            <span>Unduh Dokumen (PDF)</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

@@ -36,7 +36,7 @@
         <section class="pub-content">
             <div class="container">
 
-                <!-- Kontrol Filter, Bookmark, & Pencarian -->p
+                <!-- Kontrol Filter, Bookmark, & Pencarian -->
                 <div class="pub-controls-bar">
                     <!-- Topic Filter Pills & Bookmark Filter -->
                     <div class="pub-filter-pills" id="article-filter-pills" role="tablist">
@@ -99,7 +99,11 @@
                                     </button>
                                 </div>
 
-                                <h2 class="pub-card-title">{{ $item['judul'] }}</h2>
+                                <h2 class="pub-card-title">
+                                    <a href="{{ route('publikasi.artikel.detail', $item['id']) }}" class="pub-card-title-link">
+                                        {{ $item['judul'] }}
+                                    </a>
+                                </h2>
                                 <p class="pub-card-excerpt">{{ $item['ringkasan'] }}</p>
 
                                 <!-- Poin Kunci Highlight -->
@@ -122,11 +126,10 @@
                                         </div>
                                     </div>
 
-                                    <button type="button" class="btn-text-action btn-read-article"
-                                        data-article-id="{{ $item['id'] }}">
+                                    <a href="{{ route('publikasi.artikel.detail', $item['id']) }}" class="btn-text-action">
                                         <span>Baca Analisis</span>
                                         <i data-lucide="arrow-right" class="icon-xs"></i>
-                                    </button>
+                                    </a>
                                 </div>
                             </div>
                         </article>
@@ -236,6 +239,6 @@
 
     <!-- Raw data JSON untuk interaktivitas modal cepat -->
     <script id="article-data-json" type="application/json">
-        {!! json_encode($items) !!}
-    </script>
+            {!! json_encode($items) !!}
+        </script>
 @endsection

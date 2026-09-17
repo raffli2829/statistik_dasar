@@ -16,11 +16,13 @@ class PublikasiController extends Controller
     }
 
     /**
-     * Halaman daftar berita terkini seputar data statistik.
+     * Sumber data berita statistik daerah.
+     *
+     * @return array<int, array{id: string, tanggal: string, judul: string, ringkasan: string, isi: string, kategori: string, waktu_baca: string, sumber: string, is_headline: bool, tags: string[], ikon: string}>
      */
-    public function berita(): View
+    private function getBeritaData(): array
     {
-        $items = [
+        return [
             [
                 'id' => 'kemiskinan-semester-1-2024',
                 'tanggal' => '28 Agustus 2024',
@@ -100,7 +102,14 @@ class PublikasiController extends Controller
                 'ikon' => 'shopping-cart',
             ],
         ];
+    }
 
+    /**
+     * Halaman daftar berita terkini seputar data statistik.
+     */
+    public function berita(): View
+    {
+        $items = $this->getBeritaData();
         $kategoriList = ['Semua', 'Rilis Data', 'Kegiatan', 'Publikasi'];
 
         return view('publikasi.berita', [
@@ -110,11 +119,37 @@ class PublikasiController extends Controller
     }
 
     /**
-     * Halaman daftar artikel analisis berbasis data.
+     * Halaman baca detail berita statistik lengkap.
      */
-    public function artikel(): View
+    public function beritaDetail(string $id): View
     {
-        $items = [
+        $allItems = $this->getBeritaData();
+        $news = collect($allItems)->firstWhere('id', $id);
+
+        if (! $news) {
+            abort(404, 'Berita statistik tidak ditemukan.');
+        }
+
+        // Berita terkait dalam kategori yang sama atau berita lainnya
+        $relatedNews = collect($allItems)
+            ->filter(fn ($item) => $item['id'] !== $id)
+            ->sortByDesc(fn ($item) => $item['kategori'] === $news['kategori'] ? 1 : 0)
+            ->take(3)
+            ->values()
+            ->all();
+
+        return view('publikasi.berita-detail', [
+            'news' => $news,
+            'relatedNews' => $relatedNews,
+        ]);
+    }
+
+    /**
+     * Sumber data artikel analisis berbasis data.
+     */
+    private function getArtikelData(): array
+    {
+        return [
             [
                 'id' => 'transformasi-struktur-ekonomi-bangka',
                 'tanggal' => '20 Agustus 2024',
@@ -218,12 +253,45 @@ class PublikasiController extends Controller
                 'rekomendasi' => 'Pemutakhiran berkala data P3KE setiap kuartal oleh perangkat desa dan pendamping PKH untuk mencegah terjadinya pergeseran keluarga rentan kembali ke kategori miskin.',
             ],
         ];
+    }
 
+    /**
+     * Halaman daftar artikel analisis berbasis data.
+     */
+    public function artikel(): View
+    {
+        $items = $this->getArtikelData();
         $kategoriList = ['Semua', 'Ekonomi', 'Sosial', 'Kependudukan', 'Pertanian'];
 
         return view('publikasi.artikel', [
             'items' => $items,
             'kategoriList' => $kategoriList,
+        ]);
+    }
+
+    /**
+     * Halaman baca detail artikel analisis lengkap.
+     */
+    public function artikelDetail(string $id): View
+    {
+        $allItems = $this->getArtikelData();
+        $article = collect($allItems)->firstWhere('id', $id);
+
+        if (! $article) {
+            abort(404, 'Artikel analisis tidak ditemukan.');
+        }
+
+        // Artikel terkait dalam kategori yang sama atau artikel lainnya
+        $relatedArticles = collect($allItems)
+            ->filter(fn ($item) => $item['id'] !== $id)
+            ->sortByDesc(fn ($item) => $item['kategori'] === $article['kategori'] ? 1 : 0)
+            ->take(3)
+            ->values()
+            ->all();
+
+        return view('publikasi.artikel-detail', [
+            'article' => $article,
+            'relatedArticles' => $relatedArticles,
         ]);
     }
 

@@ -61,7 +61,11 @@
                                 {{ $headlineItem['waktu_baca'] }}
                             </span>
                         </div>
-                        <h2 class="pub-headline-title">{{ $headlineItem['judul'] }}</h2>
+                        <h2 class="pub-headline-title">
+                            <a href="{{ route('publikasi.berita.detail', $headlineItem['id']) }}" class="pub-card-title-link">
+                                {{ $headlineItem['judul'] }}
+                            </a>
+                        </h2>
                         <p class="pub-headline-excerpt">{{ $headlineItem['ringkasan'] }}</p>
                         
                         <div class="pub-headline-tags">
@@ -71,12 +75,10 @@
                         </div>
 
                         <div class="pub-headline-action">
-                            <button type="button" 
-                                    class="btn-primary-pub btn-read-news" 
-                                    data-news-id="{{ $headlineItem['id'] }}">
+                            <a href="{{ route('publikasi.berita.detail', $headlineItem['id']) }}" class="btn-primary-pub">
                                 <i data-lucide="book-open" class="icon-xs"></i>
                                 <span>Baca Berita Lengkap</span>
-                            </button>
+                            </a>
                             <button type="button" 
                                     class="btn-secondary-pub btn-share-news" 
                                     data-title="{{ $headlineItem['judul'] }}"
@@ -163,7 +165,11 @@
                                 {{ $item['waktu_baca'] }}
                             </span>
                         </div>
-                        <h2 class="pub-card-title">{{ $item['judul'] }}</h2>
+                        <h2 class="pub-card-title">
+                            <a href="{{ route('publikasi.berita.detail', $item['id']) }}" class="pub-card-title-link">
+                                {{ $item['judul'] }}
+                            </a>
+                        </h2>
                         <p class="pub-card-excerpt">{{ $item['ringkasan'] }}</p>
                         
                         <div class="pub-card-footer">
@@ -173,12 +179,10 @@
                             </span>
 
                             <div class="pub-card-actions-right">
-                                <button type="button" 
-                                        class="btn-text-action btn-read-news" 
-                                        data-news-id="{{ $item['id'] }}">
+                                <a href="{{ route('publikasi.berita.detail', $item['id']) }}" class="btn-text-action">
                                     <span>Baca Berita</span>
                                     <i data-lucide="arrow-right" class="icon-xs"></i>
-                                </button>
+                                </a>
                                 <button type="button" 
                                         class="btn-icon-subtle btn-share-news" 
                                         title="Bagikan tautan"

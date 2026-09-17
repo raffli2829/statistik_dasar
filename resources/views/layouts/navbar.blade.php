@@ -12,14 +12,14 @@
 
             <!-- Dropdown Publikasi -->
             <div class="nav-dropdown" id="nav-dropdown-publikasi">
-                <a href="{{ route('publikasi.berita') }}" 
+                <button type="button" 
                    class="nav-link nav-dropdown-trigger {{ request()->is('publikasi*') ? 'is-active' : '' }}" 
                    id="btn-dropdown-publikasi"
                    aria-expanded="false" 
                    aria-haspopup="true">
                     <span>Publikasi</span>
                     <i data-lucide="chevron-down" class="icon-xs dropdown-caret"></i>
-                </a>
+                </button>
 
                 <!-- Mega Dropdown Panel -->
                 <div class="dropdown-menu-mega" id="menu-dropdown-publikasi" role="menu">

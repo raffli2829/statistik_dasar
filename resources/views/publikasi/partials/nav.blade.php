@@ -4,7 +4,7 @@
             <!-- 1. Berita -->
             <li>
                 <a href="{{ route('publikasi.berita') }}" 
-                   class="pub-subnav-link {{ request()->routeIs('publikasi.berita') ? 'active' : '' }}">
+                   class="pub-subnav-link {{ request()->routeIs('publikasi.berita*') ? 'active' : '' }}">
                     <i data-lucide="newspaper" class="icon-xs"></i>
                     <span>Berita</span>
                     <span class="pub-subnav-badge">6</span>
@@ -14,7 +14,7 @@
             <!-- 2. Artikel -->
             <li>
                 <a href="{{ route('publikasi.artikel') }}" 
-                   class="pub-subnav-link {{ request()->routeIs('publikasi.artikel') ? 'active' : '' }}">
+                   class="pub-subnav-link {{ request()->routeIs('publikasi.artikel*') ? 'active' : '' }}">
                     <i data-lucide="file-text" class="icon-xs"></i>
                     <span>Artikel</span>
                     <span class="pub-subnav-badge">6</span>

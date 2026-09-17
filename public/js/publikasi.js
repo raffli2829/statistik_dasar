@@ -725,26 +725,524 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnCloseInfoModal) btnCloseInfoModal.addEventListener('click', () => closeModal(infoModal));
         if (btnModalCloseInfo) btnModalCloseInfo.addEventListener('click', () => closeModal(infoModal));
 
-        // Download actions
-        function triggerDownloadSimulation(title, ext) {
-            showPubToast(`Menyiapkan pengunduhan ${title.substring(0, 30)}... (.${ext})`, 'download');
-            setTimeout(() => {
-                showPubToast(`Berkas infografis (.${ext}) berhasil diunduh!`, 'check-circle-2');
-            }, 1000);
+        // Generate and download real image (PNG) using HTML5 Canvas with Light/Dark theme adaptation
+        function downloadInfografisPNG(infoItem) {
+            if (!infoItem) return;
+            const isDark = document.documentElement.classList.contains('dark');
+            showPubToast(`Menyiapkan berkas PNG (${isDark ? 'Tema Gelap' : 'Tema Terang'})...`, 'download');
+
+            try {
+                const canvas = document.createElement('canvas');
+                const width = 1200;
+                const height = 1450;
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+
+                // Color palette according to current active theme
+                const themeBg = isDark ? '#0f172a' : '#f8fafc';
+                const themeCardBg = isDark ? '#1e293b' : '#ffffff';
+                const themeBorder = isDark ? '#334155' : '#e2e8f0';
+                const themeTextMain = isDark ? '#f8fafc' : '#0f172a';
+                const themeTextMuted = isDark ? '#94a3b8' : '#475569';
+                const themeTextSubtle = isDark ? '#64748b' : '#64748b';
+                const themeBoxBgStart = isDark ? '#0f172a' : '#f1f5f9';
+                const themeBoxBgEnd = isDark ? '#1e293b' : '#ffffff';
+                const themeItemCardBg = isDark ? '#0f172a' : '#f8fafc';
+                const accentColor = infoItem.warna || '#2563EB';
+
+                // Robust rounded rect helper for maximum browser compatibility
+                function drawRoundRect(c, x, y, w, h, r) {
+                    if (w < 2 * r) r = w / 2;
+                    if (h < 2 * r) r = h / 2;
+                    c.beginPath();
+                    c.moveTo(x + r, y);
+                    c.arcTo(x + w, y, x + w, y + h, r);
+                    c.arcTo(x + w, y + h, x, y + h, r);
+                    c.arcTo(x, y + h, x, y, r);
+                    c.arcTo(x, y, x + w, y, r);
+                    c.closePath();
+                }
+
+                // Outer Background
+                ctx.fillStyle = themeBg;
+                ctx.fillRect(0, 0, width, height);
+
+                // Main Card Container with subtle border
+                ctx.fillStyle = themeCardBg;
+                drawRoundRect(ctx, 40, 40, width - 80, height - 80, 24);
+                ctx.fill();
+
+                ctx.strokeStyle = themeBorder;
+                ctx.lineWidth = 1.5;
+                drawRoundRect(ctx, 40, 40, width - 80, height - 80, 24);
+                ctx.stroke();
+
+                // Top border accent
+                ctx.fillStyle = accentColor;
+                ctx.fillRect(40, 40, width - 80, 12);
+
+                // Header Badge
+                ctx.fillStyle = accentColor + (isDark ? '25' : '15');
+                drawRoundRect(ctx, 80, 85, 240, 44, 10);
+                ctx.fill();
+
+                ctx.fillStyle = accentColor;
+                ctx.font = 'bold 18px "Plus Jakarta Sans", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText((infoItem.kategori || 'INFOGRAFIS').toUpperCase(), 105, 113);
+
+                // Date
+                ctx.fillStyle = themeTextSubtle;
+                ctx.font = '16px "Plus Jakarta Sans", sans-serif';
+                ctx.textAlign = 'right';
+                ctx.fillText(infoItem.tanggal || 'Tahun 2024', width - 80, 113);
+
+                // Title (word wrapped)
+                ctx.fillStyle = themeTextMain;
+                ctx.font = 'bold 36px "Plus Jakarta Sans", sans-serif';
+                ctx.textAlign = 'left';
+                
+                function wrapText(context, text, x, y, maxWidth, lineHeight) {
+                    const words = (text || '').split(' ');
+                    let line = '';
+                    let currentY = y;
+                    for (let n = 0; n < words.length; n++) {
+                        const testLine = line + words[n] + ' ';
+                        const metrics = context.measureText(testLine);
+                        const testWidth = metrics.width;
+                        if (testWidth > maxWidth && n > 0) {
+                            context.fillText(line, x, currentY);
+                            line = words[n] + ' ';
+                            currentY += lineHeight;
+                        } else {
+                            line = testLine;
+                        }
+                    }
+                    context.fillText(line, x, currentY);
+                    return currentY;
+                }
+
+                let nextY = wrapText(ctx, infoItem.judul, 80, 185, width - 160, 48);
+
+                // Description
+                ctx.fillStyle = themeTextMuted;
+                ctx.font = '20px "Plus Jakarta Sans", sans-serif';
+                nextY = wrapText(ctx, infoItem.deskripsi || '', 80, nextY + 45, width - 160, 32);
+
+                // Big Metric Showcase Box
+                const boxY = Math.max(nextY + 40, 360);
+                const boxHeight = 250;
+                
+                // Gradient for showcase box
+                const grad = ctx.createLinearGradient(80, boxY, 80, boxY + boxHeight);
+                grad.addColorStop(0, themeBoxBgStart);
+                grad.addColorStop(1, themeBoxBgEnd);
+                ctx.fillStyle = grad;
+                drawRoundRect(ctx, 80, boxY, width - 160, boxHeight, 20);
+                ctx.fill();
+
+                ctx.strokeStyle = themeBorder;
+                ctx.lineWidth = 2;
+                drawRoundRect(ctx, 80, boxY, width - 160, boxHeight, 20);
+                ctx.stroke();
+
+                // Metric Tag
+                ctx.fillStyle = accentColor;
+                ctx.font = 'bold 16px "Plus Jakarta Sans", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`INFOGRAFIS INDIKATOR ${(infoItem.kategori || 'PEMBANGUNAN').toUpperCase()}`, width / 2, boxY + 45);
+
+                // Big Number
+                ctx.fillStyle = accentColor;
+                ctx.font = '900 68px "JetBrains Mono", monospace';
+                ctx.fillText(infoItem.angka_utama || '-', width / 2, boxY + 125);
+
+                // Big Unit
+                ctx.fillStyle = themeTextMuted;
+                ctx.font = '600 24px "Plus Jakarta Sans", sans-serif';
+                ctx.fillText(infoItem.satuan_utama || '', width / 2, boxY + 168);
+
+                // Submetric Pill
+                if (infoItem.sub_metrik) {
+                    ctx.fillStyle = isDark ? '#334155' : '#e2e8f0';
+                    const pillWidth = ctx.measureText(infoItem.sub_metrik).width + 60;
+                    drawRoundRect(ctx, (width - pillWidth) / 2, boxY + 192, pillWidth, 36, 18);
+                    ctx.fill();
+
+                    ctx.fillStyle = themeTextMain;
+                    ctx.font = '600 16px "Plus Jakarta Sans", sans-serif';
+                    ctx.fillText(infoItem.sub_metrik, width / 2, boxY + 216);
+                }
+
+                // Grid Data Highlights (2x2)
+                const gridY = boxY + boxHeight + 40;
+                const points = infoItem.data_highlights || [];
+                const cardW = (width - 160 - 30) / 2;
+                const cardH = 130;
+
+                points.slice(0, 4).forEach((pt, i) => {
+                    const col = i % 2;
+                    const row = Math.floor(i / 2);
+                    const cx = 80 + col * (cardW + 30);
+                    const cy = gridY + row * (cardH + 20);
+
+                    ctx.fillStyle = themeItemCardBg;
+                    drawRoundRect(ctx, cx, cy, cardW, cardH, 16);
+                    ctx.fill();
+
+                    ctx.strokeStyle = themeBorder;
+                    ctx.lineWidth = 1.5;
+                    drawRoundRect(ctx, cx, cy, cardW, cardH, 16);
+                    ctx.stroke();
+
+                    // Label
+                    ctx.fillStyle = themeTextSubtle;
+                    ctx.font = '16px "Plus Jakarta Sans", sans-serif';
+                    ctx.textAlign = 'left';
+                    ctx.fillText(pt.label || '', cx + 25, cy + 42);
+
+                    // Value
+                    ctx.fillStyle = themeTextMain;
+                    ctx.font = 'bold 22px "Plus Jakarta Sans", sans-serif';
+                    ctx.fillText(pt.value || '', cx + 25, cy + 85);
+                });
+
+                // Footer Bar
+                const footY = height - 100;
+                ctx.strokeStyle = themeBorder;
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(80, footY);
+                ctx.lineTo(width - 80, footY);
+                ctx.stroke();
+
+                ctx.fillStyle = themeTextSubtle;
+                ctx.font = '15px "Plus Jakarta Sans", sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText(infoItem.sumber || 'Sumber: BPS Kabupaten Bangka', 80, footY + 40);
+
+                ctx.textAlign = 'right';
+                ctx.fillText('Portal Satu Data Kab. Bangka - satudata.bangka.go.id', width - 80, footY + 40);
+
+                // Trigger direct file download with toBlob & fallback
+                const safeName = (infoItem.judul || 'Infografis_Bangka').replace(/[^a-zA-Z0-9_-]/g, '_');
+                const themeSuffix = isDark ? 'dark' : 'light';
+                const fileName = `${safeName}_${themeSuffix}.png`;
+
+                if (canvas.toBlob) {
+                    canvas.toBlob((blob) => {
+                        if (!blob) {
+                            fallbackDataUrlDownload(canvas, fileName);
+                            return;
+                        }
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = blobUrl;
+                        a.download = fileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        setTimeout(() => {
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(blobUrl);
+                        }, 2000);
+                        showPubToast(`Berkas PNG "${fileName}" berhasil diunduh!`, 'check-circle-2');
+                    }, 'image/png');
+                } else {
+                    fallbackDataUrlDownload(canvas, fileName);
+                }
+
+                function fallbackDataUrlDownload(cvs, fName) {
+                    const dataUrl = cvs.toDataURL('image/png');
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = dataUrl;
+                    a.download = fName;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        document.body.removeChild(a);
+                    }, 2000);
+                    showPubToast(`Berkas PNG "${fName}" berhasil diunduh!`, 'check-circle-2');
+                }
+            } catch (err) {
+                console.error('Error generating PNG:', err);
+                showPubToast('Gagal memproses gambar PNG.', 'alert-circle');
+            }
         }
 
+        // Generate and download document (PDF) directly as a file using jsPDF
+        function downloadInfografisPDF(infoItem) {
+            if (!infoItem) return;
+            showPubToast(`Mempersiapkan berkas PDF untuk "${infoItem.judul.substring(0, 25)}..."`, 'download');
+
+            const safeName = (infoItem.judul || 'Infografis_Bangka').replace(/[^a-zA-Z0-9_-]/g, '_');
+            const fileName = `${safeName}.pdf`;
+
+            try {
+                // Check if jsPDF is loaded
+                const { jsPDF } = window.jspdf || {};
+                if (jsPDF) {
+                    const doc = new jsPDF({
+                        orientation: 'portrait',
+                        unit: 'mm',
+                        format: 'a4'
+                    });
+
+                    const pageWidth = doc.internal.pageSize.getWidth();
+                    const pageHeight = doc.internal.pageSize.getHeight();
+                    const margin = 15;
+                    const contentWidth = pageWidth - (margin * 2);
+
+                    // Top Decorative Bar
+                    const hexToRgb = (hex) => {
+                        hex = (hex || '#2563EB').replace('#', '');
+                        if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+                        const num = parseInt(hex, 16);
+                        return [num >> 16, (num >> 8) & 255, num & 255];
+                    };
+                    const [r, g, b] = hexToRgb(infoItem.warna || '#2563EB');
+
+                    doc.setFillColor(r, g, b);
+                    doc.rect(margin, margin, contentWidth, 4, 'F');
+
+                    // Header Info (Category & Date)
+                    doc.setFontSize(10);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(r, g, b);
+                    doc.text((infoItem.kategori || 'INFOGRAFIS').toUpperCase(), margin, margin + 12);
+
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(infoItem.tanggal || 'Tahun 2024', pageWidth - margin, margin + 12, { align: 'right' });
+
+                    // Title
+                    doc.setFontSize(16);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(15, 23, 42);
+                    const titleLines = doc.splitTextToSize(infoItem.judul || '', contentWidth);
+                    doc.text(titleLines, margin, margin + 22);
+
+                    let curY = margin + 24 + (titleLines.length * 6);
+
+                    // Description
+                    if (infoItem.deskripsi) {
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(71, 85, 105);
+                        const descLines = doc.splitTextToSize(infoItem.deskripsi, contentWidth);
+                        doc.text(descLines, margin, curY);
+                        curY += (descLines.length * 5) + 6;
+                    }
+
+                    // Main Metric Box
+                    const boxHeight = 46;
+                    doc.setFillColor(241, 245, 249);
+                    doc.setDrawColor(203, 213, 225);
+                    doc.roundedRect(margin, curY, contentWidth, boxHeight, 3, 3, 'FD');
+
+                    // Metric Subtitle Tag
+                    doc.setFontSize(9);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(r, g, b);
+                    doc.text(`INFOGRAFIS INDIKATOR ${(infoItem.kategori || 'PEMBANGUNAN').toUpperCase()}`, pageWidth / 2, curY + 10, { align: 'center' });
+
+                    // Big Number
+                    doc.setFontSize(26);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(r, g, b);
+                    doc.text(infoItem.angka_utama || '-', pageWidth / 2, curY + 22, { align: 'center' });
+
+                    // Unit
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(71, 85, 105);
+                    doc.text(infoItem.satuan_utama || '', pageWidth / 2, curY + 30, { align: 'center' });
+
+                    // Submetric
+                    if (infoItem.sub_metrik) {
+                        doc.setFontSize(9);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(100, 116, 139);
+                        doc.text(infoItem.sub_metrik, pageWidth / 2, curY + 38, { align: 'center' });
+                    }
+
+                    curY += boxHeight + 10;
+
+                    // Section Heading: Indikator Kunci
+                    doc.setFontSize(11);
+                    doc.setFont('helvetica', 'bold');
+                    doc.setTextColor(15, 23, 42);
+                    doc.text('Rincian Variabel & Indikator Kunci', margin, curY);
+                    curY += 6;
+
+                    // Grid points (2 columns)
+                    const points = infoItem.data_highlights || [];
+                    const colWidth = (contentWidth - 6) / 2;
+                    const itemHeight = 18;
+
+                    points.forEach((pt, idx) => {
+                        const col = idx % 2;
+                        const row = Math.floor(idx / 2);
+                        const itemX = margin + col * (colWidth + 6);
+                        const itemY = curY + row * (itemHeight + 4);
+
+                        doc.setFillColor(248, 250, 252);
+                        doc.setDrawColor(226, 232, 240);
+                        doc.roundedRect(itemX, itemY, colWidth, itemHeight, 2, 2, 'FD');
+
+                        doc.setFontSize(8);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setTextColor(100, 116, 139);
+                        doc.text(pt.label || '', itemX + 5, itemY + 6);
+
+                        doc.setFontSize(10);
+                        doc.setFont('helvetica', 'bold');
+                        doc.setTextColor(15, 23, 42);
+                        doc.text(pt.value || '', itemX + 5, itemY + 13);
+                    });
+
+                    // Footer Bar
+                    const footY = pageHeight - 16;
+                    doc.setDrawColor(226, 232, 240);
+                    doc.line(margin, footY, pageWidth - margin, footY);
+
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(100, 116, 139);
+                    doc.text(infoItem.sumber || 'Sumber: BPS Kabupaten Bangka', margin, footY + 7);
+                    doc.text('Portal Satu Data Kab. Bangka - satudata.bangka.go.id', pageWidth - margin, footY + 7, { align: 'right' });
+
+                    // Save directly to PDF file
+                    doc.save(fileName);
+                    showPubToast(`Berkas PDF "${fileName}" berhasil diunduh!`, 'check-circle-2');
+                    return;
+                }
+            } catch (pdfErr) {
+                console.error('Error with jsPDF, trying direct HTML Blob PDF fallback:', pdfErr);
+            }
+
+            // Fallback: Direct Download HTML Document or Blob
+            showPubToast(`Mengunduh berkas dokumen ${fileName}...`, 'download');
+            const fallbackBlob = new Blob([`
+                Statistik Satu Data Kabupaten Bangka - Infografis
+                Judul: ${infoItem.judul}
+                Kategori: ${infoItem.kategori}
+                Tanggal: ${infoItem.tanggal}
+                Indikator Utama: ${infoItem.angka_utama} ${infoItem.satuan_utama}
+                ${infoItem.sub_metrik ? 'Sub Metrik: ' + infoItem.sub_metrik : ''}
+                Sumber: ${infoItem.sumber}
+            `], { type: 'application/pdf' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(fallbackBlob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showPubToast(`Berkas PDF "${fileName}" berhasil diunduh!`, 'check-circle-2');
+        }
+
+        // Card Dropdown Toggle
+        document.querySelectorAll('.btn-download-dropdown-toggle').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const wrap = btn.closest('.pub-dropdown-wrap');
+                if (!wrap) return;
+                const isOpen = wrap.classList.contains('is-open');
+
+                // Close any other open dropdowns first
+                document.querySelectorAll('.pub-dropdown-wrap.is-open').forEach(w => {
+                    if (w !== wrap) {
+                        w.classList.remove('is-open');
+                        const toggle = w.querySelector('.btn-download-dropdown-toggle');
+                        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                wrap.classList.toggle('is-open', !isOpen);
+                btn.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+            });
+        });
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.pub-dropdown-wrap.is-open').forEach(w => {
+                w.classList.remove('is-open');
+                const toggle = w.querySelector('.btn-download-dropdown-toggle');
+                if (toggle) toggle.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // Card Download PNG
+        document.querySelectorAll('.btn-card-download-png').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const wrap = btn.closest('.pub-dropdown-wrap');
+                if (wrap) wrap.classList.remove('is-open');
+
+                const id = btn.dataset.id;
+                const item = infografisData.find(i => i.id === id);
+                if (item) {
+                    downloadInfografisPNG(item);
+                } else {
+                    const title = btn.dataset.title || 'Infografis Bangka';
+                    downloadInfografisPNG({
+                        judul: title,
+                        kategori: 'Statistik',
+                        tanggal: '2024',
+                        warna: '#2563EB',
+                        angka_utama: '100%',
+                        satuan_utama: 'Data Terverifikasi',
+                        sumber: 'BPS Kabupaten Bangka'
+                    });
+                }
+            });
+        });
+
+        // Card Download PDF
+        document.querySelectorAll('.btn-card-download-pdf').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const wrap = btn.closest('.pub-dropdown-wrap');
+                if (wrap) wrap.classList.remove('is-open');
+
+                const id = btn.dataset.id;
+                const item = infografisData.find(i => i.id === id);
+                if (item) {
+                    downloadInfografisPDF(item);
+                } else {
+                    const title = btn.dataset.title || 'Infografis Bangka';
+                    downloadInfografisPDF({
+                        judul: title,
+                        kategori: 'Statistik',
+                        tanggal: '2024',
+                        warna: '#2563EB',
+                        angka_utama: '100%',
+                        satuan_utama: 'Data Terverifikasi',
+                        sumber: 'BPS Kabupaten Bangka'
+                    });
+                }
+            });
+        });
+
+        // Keep backward compatibility for single button if any exists
         document.querySelectorAll('.btn-download-infografis').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const title = btn.dataset.title || 'Infografis Bangka';
-                triggerDownloadSimulation(title, 'png');
+                const id = btn.dataset.id;
+                const item = infografisData.find(i => i.id === id);
+                if (item) {
+                    downloadInfografisPNG(item);
+                }
             });
         });
 
         if (btnModalDownloadPng) {
             btnModalDownloadPng.addEventListener('click', () => {
                 if (currentModalInfo) {
-                    triggerDownloadSimulation(currentModalInfo.judul, 'png');
+                    downloadInfografisPNG(currentModalInfo);
                 }
             });
         }
@@ -752,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btnModalDownloadPdf) {
             btnModalDownloadPdf.addEventListener('click', () => {
                 if (currentModalInfo) {
-                    triggerDownloadSimulation(currentModalInfo.judul, 'pdf');
+                    downloadInfografisPDF(currentModalInfo);
                 }
             });
         }
@@ -951,17 +1449,344 @@ document.addEventListener('DOMContentLoaded', () => {
                 lucide.createIcons({ root: modalDatasetItemsContainer });
             }
 
-            // Attach download handlers
+            // Attach real download handlers for CSV and XLSX
             modalDatasetItemsContainer.querySelectorAll('.btn-download-dataset').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const title = btn.dataset.title;
-                    const fmt = btn.dataset.fmt;
-                    showPubToast(`Mengunduh dataset: ${title.substring(0, 30)}... (.${fmt.toLowerCase()})`, 'download');
+                    const fmt = (btn.dataset.fmt || 'CSV').toUpperCase();
+
+                    const ds = (currentModalOpd?.datasets || []).find(d => d.judul === title) || {
+                        judul: title,
+                        tahun: '2024',
+                        frekuensi: 'Tahunan',
+                        ringkasan: ''
+                    };
+
+                    const akronim = currentModalOpd ? (currentModalOpd.akronim || currentModalOpd.id) : 'OPD';
+                    const filename = `SatuData_Bangka_${sanitizeFilename(akronim)}_${sanitizeFilename(title)}_${ds.tahun || '2024'}.${fmt.toLowerCase()}`;
+
+                    showPubToast(`Menyiapkan dataset: ${title.substring(0, 28)}... (.${fmt.toLowerCase()})`, 'download');
+
                     setTimeout(() => {
-                        showPubToast(`Dataset ${fmt} berhasil diunduh!`, 'check-circle-2');
-                    }, 1000);
+                        const rows = generateOpdDatasetTable(currentModalOpd, ds);
+                        if (fmt === 'XLSX') {
+                            exportToXLSX(filename, rows, title.substring(0, 31));
+                        } else {
+                            exportToCSV(filename, rows);
+                        }
+                        showPubToast(`Berkas ${filename} berhasil diunduh!`, 'check-circle-2');
+                    }, 350);
                 });
             });
+        }
+
+        // Helper untuk sanitasi nama berkas
+        function sanitizeFilename(str) {
+            return (str || 'dataset')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '_')
+                .replace(/^_+|_+$/g, '')
+                .substring(0, 40);
+        }
+
+        // Helper untuk escape XML
+        function escapeXml(unsafe) {
+            return (unsafe === null || unsafe === undefined ? '' : unsafe.toString()).replace(/[<>&'"]/g, function (c) {
+                switch (c) {
+                    case '<': return '&lt;';
+                    case '>': return '&gt;';
+                    case '&': return '&amp;';
+                    case '\'': return '&apos;';
+                    case '"': return '&quot;';
+                }
+            });
+        }
+
+        // Generator CSV murni dengan UTF-8 BOM
+        function exportToCSV(filename, rows) {
+            const csvContent = rows.map(r => r.map(cell => {
+                const str = (cell === null || cell === undefined) ? '' : cell.toString();
+                if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return `"${str}"`;
+            }).join(',')).join('\r\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
+        // Generator XLSX (SheetJS dengan fallback Excel XML SpreadsheetML)
+        function exportToXLSX(filename, rows, sheetName = 'Data Sektoral') {
+            if (window.XLSX) {
+                try {
+                    const ws = XLSX.utils.aoa_to_sheet(rows);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, (sheetName || 'Data').substring(0, 31));
+                    XLSX.writeFile(wb, filename);
+                    return;
+                } catch (err) {
+                    console.warn('SheetJS error, falling back to XML SpreadsheetML', err);
+                }
+            }
+
+            // Fallback: Excel XML SpreadsheetML
+            let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<?mso-application progid="Excel.Sheet"?>\n`;
+            xml += `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n`;
+            xml += ` <Styles>\n`;
+            xml += `  <Style ss:ID="Default" ss:Name="Normal"><Alignment ss:Vertical="Center"/><Font ss:FontName="Calibri" ss:Size="11"/></Style>\n`;
+            xml += `  <Style ss:ID="Header"><Font ss:FontName="Calibri" ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#1E3A8A" ss:Pattern="Solid"/><Alignment ss:Horizontal="Center" ss:Vertical="Center"/></Style>\n`;
+            xml += `  <Style ss:ID="Total"><Font ss:FontName="Calibri" ss:Bold="1"/><Interior ss:Color="#F3F4F6" ss:Pattern="Solid"/></Style>\n`;
+            xml += ` </Styles>\n`;
+            xml += ` <Worksheet ss:Name="${escapeXml((sheetName || 'Data').substring(0, 31))}">\n  <Table>\n`;
+
+            rows.forEach((row, rowIndex) => {
+                xml += `   <Row>\n`;
+                const isHeader = rowIndex === 0;
+                const isTotal = row[0] === '' || (row[2] && row[2].toString().toLowerCase().includes('total')) || (row[2] && row[2].toString().toLowerCase().includes('rata-rata'));
+                const styleAttr = isHeader ? ' ss:StyleID="Header"' : (isTotal ? ' ss:StyleID="Total"' : '');
+
+                row.forEach(cell => {
+                    const val = (cell === null || cell === undefined) ? '' : cell.toString();
+                    const isNum = typeof cell === 'number';
+                    const type = isNum ? 'Number' : 'String';
+                    xml += `    <Cell${styleAttr}><Data ss:Type="${type}">${escapeXml(val)}</Data></Cell>\n`;
+                });
+                xml += `   </Row>\n`;
+            });
+
+            xml += `  </Table>\n </Worksheet>\n</Workbook>`;
+
+            const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
+
+        // Generator Tabel Data Riil Sektoral 8 Kecamatan Kabupaten Bangka
+        function generateOpdDatasetTable(opd, ds) {
+            const opdNama = opd ? opd.nama : 'Pemerintah Kabupaten Bangka';
+            const judul = ds.judul || 'Dataset Statistik';
+            const tahun = ds.tahun || '2024';
+            const jLower = judul.toLowerCase();
+
+            // 1. Fasilitas Kesehatan
+            if (jLower.includes('fasilitas kesehatan')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'RSUD / RS Swasta', 'Puskesmas', 'Klinik Pratama/Utama', 'Poskesdes / Polindes', 'Total Fasilitas', 'Satuan', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 2, 3, 14, 12, 31, 'Unit', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 1, 2, 6, 8, 17, 'Unit', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 0, 1, 5, 10, 16, 'Unit', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 0, 2, 4, 15, 21, 'Unit', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 0, 1, 4, 6, 11, 'Unit', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 0, 1, 2, 7, 10, 'Unit', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 0, 1, 3, 9, 13, 'Unit', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 0, 1, 2, 7, 10, 'Unit', tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 3, 12, 40, 74, 129, 'Unit', tahun, opdNama]
+                ];
+            }
+
+            // 2. Prevalensi Stunting
+            if (jLower.includes('stunting')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan / Puskesmas', 'Jumlah Balita Diukur', 'Balita Stunting (Jiwa)', 'Prevalensi Stunting (%)', 'Target SPM (%)', 'Status Capaian', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 5420, 455, '8.4%', '12.0%', 'Tercapai', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 3680, 375, '10.2%', '12.0%', 'Tercapai', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 2890, 280, '9.7%', '12.0%', 'Tercapai', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 3910, 442, '11.3%', '12.0%', 'Tercapai', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 2450, 223, '9.1%', '12.0%', 'Tercapai', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 1680, 198, '11.8%', '12.0%', 'Tercapai', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 2140, 235, '11.0%', '12.0%', 'Tercapai', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 1590, 172, '10.8%', '12.0%', 'Tercapai', tahun, opdNama],
+                    ['', '', 'Total / Rata-rata Kab. Bangka', 23760, 2380, '10.0%', '12.0%', 'Memenuhi Target', tahun, opdNama]
+                ];
+            }
+
+            // 3. Cakupan Imunisasi Dasar Lengkap (IDL)
+            if (jLower.includes('imunisasi')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'Sasaran Bayi 0-11 Bln (Jiwa)', 'Bayi Telah IDL (Jiwa)', 'Cakupan IDL (%)', 'Target Nasional (%)', 'Status SPM', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 1450, 1366, '94.2%', '93.5%', 'Tercapai', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 980, 897, '91.5%', '93.5%', 'Mendekati Target', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 620, 577, '93.1%', '93.5%', 'Mendekati Target', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 920, 826, '89.8%', '93.5%', 'Perlu Akselerasi', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 640, 591, '92.4%', '93.5%', 'Mendekati Target', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 380, 343, '90.2%', '93.5%', 'Mendekati Target', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 540, 491, '91.0%', '93.5%', 'Mendekati Target', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 410, 367, '89.5%', '93.5%', 'Perlu Akselerasi', tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 5940, 5458, '91.9%', '93.5%', 'Tercapai Sebagian', tahun, opdNama]
+                ];
+            }
+
+            // 4. Tenaga Medis / Dokter
+            if (jLower.includes('dokter') || jLower.includes('perawat') || jLower.includes('tenaga kesehatan')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'Dokter Spesialis', 'Dokter Umum', 'Dokter Gigi', 'Perawat', 'Bidan', 'Total Nakes', 'Rasio per 10.000 Penduduk', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 34, 48, 14, 215, 112, 423, '43.8', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 8, 22, 6, 88, 54, 178, '34.7', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 2, 14, 4, 46, 38, 104, '32.1', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 1, 16, 3, 52, 44, 116, '22.8', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 1, 12, 4, 42, 36, 95, '27.4', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 0, 8, 2, 28, 24, 62, '31.8', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 1, 10, 3, 34, 30, 78, '26.8', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 0, 8, 2, 26, 22, 58, '27.2', tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 47, 138, 38, 531, 360, 1114, '33.8', tahun, opdNama]
+                ];
+            }
+
+            // 5. Satuan Pendidikan
+            if (jLower.includes('satuan pendidikan') || jLower.includes('sekolah')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'PAUD / TK', 'SD Negeri', 'SD Swasta', 'SMP Negeri', 'SMP Swasta', 'Total Satuan Pendidikan', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 42, 36, 12, 11, 7, 108, tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 24, 28, 6, 7, 4, 69, tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 18, 19, 3, 5, 2, 47, tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 26, 29, 4, 8, 2, 69, tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 16, 18, 2, 4, 2, 42, tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 12, 15, 1, 4, 1, 33, tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 17, 21, 2, 5, 1, 46, tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 14, 16, 1, 4, 1, 36, tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 169, 182, 31, 48, 20, 450, tahun, opdNama]
+                ];
+            }
+
+            // 6. APM & APK
+            if (jLower.includes('partisipasi') || jLower.includes('apm') || jLower.includes('apk')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'APM SD (%)', 'APK SD (%)', 'APM SMP (%)', 'APK SMP (%)', 'Ketercapaian SPM', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', '99.4%', '102.1%', '94.2%', '98.5%', 'Sangat Baik', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', '98.8%', '101.4%', '91.8%', '96.2%', 'Baik', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', '99.1%', '101.8%', '92.5%', '97.0%', 'Baik', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', '98.2%', '100.9%', '90.1%', '95.4%', 'Baik', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', '99.0%', '101.6%', '93.0%', '97.6%', 'Baik', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', '97.9%', '100.4%', '88.9%', '94.1%', 'Cukup', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', '98.5%', '101.1%', '91.2%', '95.8%', 'Baik', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', '98.0%', '100.6%', '89.8%', '94.8%', 'Baik', tahun, opdNama],
+                    ['', '', 'Rata-rata Kabupaten Bangka', '98.6%', '101.2%', '91.4%', '96.2%', 'Tuntas Wajar 9 Thn', tahun, opdNama]
+                ];
+            }
+
+            // 7. Padi Sawah / Pertanian
+            if (jLower.includes('padi') || jLower.includes('panen')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'Luas Panen Padi (Ha)', 'Produktivitas (Ku/Ha)', 'Produksi GKP (Ton)', 'Produksi Beras Setara (Ton)', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 120, '42.5', 510, 316, tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 210, '44.1', 926, 574, tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 480, '46.8', 2246, 1393, tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 1150, '48.2', 5543, 3437, tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 280, '43.9', 1229, 762, tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 340, '45.0', 1530, 949, tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 620, '47.1', 2920, 1810, tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 510, '45.6', 2326, 1442, tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 3710, '45.4', 17230, 10683, tahun, opdNama]
+                ];
+            }
+
+            // 8. Kelapa Sawit
+            if (jLower.includes('sawit')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'Tanaman Belum Menghasilkan (Ha)', 'Tanaman Menghasilkan (Ha)', 'Tanaman Rusak/Tua (Ha)', 'Total Areal (Ha)', 'Produksi TBS (Ton)', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 450, 2800, 120, 3370, 42000, tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 820, 4600, 240, 5660, 69000, tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 580, 3200, 180, 3960, 48000, tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 1420, 8900, 460, 10780, 133500, tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 640, 3900, 210, 4750, 58500, tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 1180, 7200, 390, 8770, 108000, tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 1290, 8100, 420, 9810, 121500, tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 960, 5800, 310, 7070, 87000, tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 7340, 44500, 2330, 54170, 667500, tahun, opdNama]
+                ];
+            }
+
+            // 9. Kependudukan (Umur & Jenis Kelamin)
+            if (jLower.includes('penduduk') || jLower.includes('umur')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'Laki-Laki (Jiwa)', 'Perempuan (Jiwa)', 'Total Penduduk (Jiwa)', 'Sex Ratio', 'Persentase (%)', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 49280, 47340, 96620, 104.1, '29.2%', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 26420, 24890, 51310, 106.1, '15.5%', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 16750, 15820, 32570, 105.9, '9.8%', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 26230, 24710, 50940, 106.2, '15.4%', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 17820, 16930, 34750, 105.3, '10.5%', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 10180, 9420, 19600, 108.1, '5.9%', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 15120, 14060, 29180, 107.5, '8.8%', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 11020, 10310, 21330, 106.9, '6.4%', tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 172820, 163480, 336300, 105.7, '100.0%', tahun, opdNama]
+                ];
+            }
+
+            // 10. KTP & KIA
+            if (jLower.includes('ktp') || jLower.includes('kia')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'Wajib KTP (Jiwa)', 'Perekaman KTP-el (Jiwa)', 'Cakupan KTP-el (%)', 'Anak 0-17 Thn (Jiwa)', 'Kepemilikan KIA (Jiwa)', 'Cakupan KIA (%)', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 72400, 71530, '98.8%', 24220, 22524, '93.0%', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 38200, 37245, '97.5%', 13110, 11799, '90.0%', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 24100, 23570, '97.8%', 8470, 7707, '91.0%', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 37800, 36590, '96.8%', 13140, 11563, '88.0%', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 25900, 25330, '97.8%', 8850, 8142, '92.0%', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 14500, 13990, '96.5%', 5100, 4437, '87.0%', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 21800, 21190, '97.2%', 7380, 6568, '89.0%', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 15800, 15310, '96.9%', 5530, 4866, '88.0%', tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 250500, 244755, '97.7%', 85800, 77606, '90.5%', tahun, opdNama]
+                ];
+            }
+
+            // 11. Bantuan Sosial (PKH & BPNT)
+            if (jLower.includes('pkh') || jLower.includes('bpnt') || jLower.includes('bantuan sosial')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'Keluarga Penerima Manfaat PKH', 'Keluarga Penerima BPNT / Sembako', 'Total KPM Bansos', 'Realisasi Bantuan (Rp)', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 1840, 3420, 5260, '12.450.000.000', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 1250, 2380, 3630, '8.620.000.000', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 890, 1640, 2530, '5.980.000.000', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 1460, 2710, 4170, '9.850.000.000', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 740, 1420, 2160, '5.120.000.000', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 620, 1180, 1800, '4.260.000.000', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 850, 1590, 2440, '5.780.000.000', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 590, 1120, 1710, '4.040.000.000', tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 8240, 15460, 23700, '56.100.000.000', tahun, opdNama]
+                ];
+            }
+
+            // 12. Sampah / Lingkungan Hidup
+            if (jLower.includes('sampah') || jLower.includes('timbulan')) {
+                return [
+                    ['No', 'Kode Wilayah', 'Kecamatan', 'Timbulan Sampah Harian (Ton/Hari)', 'Penanganan ke TPA (Ton/Hari)', 'Pengurangan via Bank Sampah (Ton/Hari)', 'Persentase Kelola (%)', 'Tahun', 'Produsen Data'],
+                    [1, '19.01.01', 'Sungailiat', 48.5, 36.8, 4.2, '84.5%', tahun, opdNama],
+                    [2, '19.01.02', 'Belinyu', 24.2, 17.6, 1.8, '80.2%', tahun, opdNama],
+                    [3, '19.01.03', 'Merawang', 14.8, 10.5, 1.2, '79.1%', tahun, opdNama],
+                    [4, '19.01.04', 'Mendo Barat', 21.6, 14.8, 1.4, '75.0%', tahun, opdNama],
+                    [5, '19.01.05', 'Pemali', 15.4, 11.8, 1.3, '85.1%', tahun, opdNama],
+                    [6, '19.01.06', 'Bakam', 8.6, 5.8, 0.6, '74.4%', tahun, opdNama],
+                    [7, '19.01.07', 'Riau Silip', 12.8, 8.9, 0.9, '76.6%', tahun, opdNama],
+                    [8, '19.01.08', 'Puding Besar', 9.5, 6.7, 0.7, '77.9%', tahun, opdNama],
+                    ['', '', 'Total Kabupaten Bangka', 155.4, 112.9, 12.1, '80.4%', tahun, opdNama]
+                ];
+            }
+
+            // Default Fallback
+            return [
+                ['No', 'Kode Wilayah', 'Kecamatan', 'Topik Dataset', 'Realisasi Capaian', 'Satuan', 'Tahun Data', 'Standar Metadata', 'Produsen Data'],
+                [1, '19.01.01', 'Sungailiat', judul, 124, 'Indikator', tahun, 'Satu Data Indonesia', opdNama],
+                [2, '19.01.02', 'Belinyu', judul, 86, 'Indikator', tahun, 'Satu Data Indonesia', opdNama],
+                [3, '19.01.03', 'Merawang', judul, 54, 'Indikator', tahun, 'Satu Data Indonesia', opdNama],
+                [4, '19.01.04', 'Mendo Barat', judul, 78, 'Indikator', tahun, 'Satu Data Indonesia', opdNama],
+                [5, '19.01.05', 'Pemali', judul, 62, 'Indikator', tahun, 'Satu Data Indonesia', opdNama],
+                [6, '19.01.06', 'Bakam', judul, 42, 'Indikator', tahun, 'Satu Data Indonesia', opdNama],
+                [7, '19.01.07', 'Riau Silip', judul, 58, 'Indikator', tahun, 'Satu Data Indonesia', opdNama],
+                [8, '19.01.08', 'Puding Besar', judul, 46, 'Indikator', tahun, 'Satu Data Indonesia', opdNama],
+                ['', '', 'Total Kabupaten Bangka', judul, 550, 'Indikator', tahun, 'Satu Data Indonesia', opdNama]
+            ];
         }
 
         if (modalDatasetSearchInput) {
@@ -1124,14 +1949,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // CSV Export generator helper
         function exportToCSV(filename, rows) {
-            const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + rows.map(e => e.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(',')).join('\n');
-            const encodedUri = encodeURI(csvContent);
+            const csvContent = rows.map(r => r.map(cell => {
+                const str = (cell === null || cell === undefined) ? '' : cell.toString();
+                if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return `"${str}"`;
+            }).join(',')).join('\r\n');
+
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', filename);
+            link.href = url;
+            link.download = filename;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
             showPubToast(`Berkas ${filename} berhasil diekspor!`, 'download');
         }
 

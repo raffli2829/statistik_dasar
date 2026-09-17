@@ -22,6 +22,12 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 
+    <!-- jsPDF for direct PDF file generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <!-- SheetJS for XLSX spreadsheet export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/statistik.css') }}">
 
@@ -123,16 +129,12 @@
                 });
             }
 
-            // Allow clicking Publikasi to navigate directly to /publikasi
-            // Hover opens the mega menu via CSS, but clicking navigates to the page
             const navDropdown = document.getElementById('nav-dropdown-publikasi');
             const btnDropdown = document.getElementById('btn-dropdown-publikasi');
-            if (btnDropdown) {
+            if (btnDropdown && navDropdown) {
                 btnDropdown.addEventListener('click', (e) => {
-                    const targetHref = btnDropdown.getAttribute('href');
-                    if (targetHref && targetHref !== '#') {
-                        window.location.href = targetHref;
-                    }
+                    e.preventDefault();
+                    navDropdown.classList.toggle('is-open');
                 });
             }
             if (navDropdown) {
