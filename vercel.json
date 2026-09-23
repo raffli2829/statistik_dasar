@@ -1,9 +1,13 @@
 {
   "version": 2,
   "framework": null,
+  "outputDirectory": "public",
   "functions": {
     "api/*.php": {
-      "runtime": "vercel-php@0.7.3"
+      "runtime": "vercel-php@0.7.3",
+      "environment": {
+        "PHP_VERSION": "8.2"
+      }
     }
   },
   "routes": [
