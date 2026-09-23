@@ -56,10 +56,6 @@
                     <div class="pub-headline-info">
                         <div class="pub-headline-meta-top">
                             <span class="pub-badge pub-badge-blue">{{ $headlineItem['kategori'] }}</span>
-                            <span class="pub-readtime">
-                                <i data-lucide="clock" class="icon-xs"></i>
-                                {{ $headlineItem['waktu_baca'] }}
-                            </span>
                         </div>
                         <h2 class="pub-headline-title">
                             <a href="{{ route('publikasi.berita.detail', $headlineItem['id']) }}" class="pub-card-title-link">
@@ -160,10 +156,6 @@
                                 <i data-lucide="calendar" class="icon-xs"></i>
                                 {{ $item['tanggal'] }}
                             </span>
-                            <span class="pub-readtime">
-                                <i data-lucide="clock" class="icon-xs"></i>
-                                {{ $item['waktu_baca'] }}
-                            </span>
                         </div>
                         <h2 class="pub-card-title">
                             <a href="{{ route('publikasi.berita.detail', $item['id']) }}" class="pub-card-title-link">
@@ -221,7 +213,6 @@
             <div class="pub-modal-meta">
                 <span class="pub-badge" id="modal-news-category">Kategori</span>
                 <span class="pub-date" id="modal-news-date">Tanggal</span>
-                <span class="pub-readtime" id="modal-news-readtime">Waktu Baca</span>
             </div>
             <button type="button" class="pub-modal-close" id="btn-close-news-modal" aria-label="Tutup modal">
                 <i data-lucide="x" class="icon-sm"></i>

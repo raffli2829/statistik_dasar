@@ -18,7 +18,7 @@ class PublikasiController extends Controller
     /**
      * Sumber data berita statistik daerah.
      *
-     * @return array<int, array{id: string, tanggal: string, judul: string, ringkasan: string, isi: string, kategori: string, waktu_baca: string, sumber: string, is_headline: bool, tags: string[], ikon: string}>
+     * @return array<int, array{id: string, tanggal: string, judul: string, ringkasan: string, isi: string, kategori: string, sumber: string, is_headline: bool, tags: string[], ikon: string}>
      */
     private function getBeritaData(): array
     {
@@ -30,7 +30,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'BPS Kabupaten Bangka secara resmi merilis profil kemiskinan terbaru. Intervensi program perlindungan sosial daerah dan stabilitas harga pangan pokok berkontribusi positif menekan angka kemiskinan hingga 4,21 persen.',
                 'isi' => "Badan Pusat Statistik (BPS) Kabupaten Bangka resmi merilis data profil kemiskinan per Semester I 2024. Persentase penduduk miskin di Kabupaten Bangka tercatat sebesar 4,21 persen, mengalami penurunan sebesar 0,32 persen poin dibandingkan periode yang sama tahun sebelumnya (4,53 persen).\n\nPenurunan ini didorong oleh penguatan daya beli masyarakat perdesaan, stabilitas harga komoditas pangan strategis seperti beras dan ikan, serta akselerasi program bantuan sosial tunai dan bantuan pangan dari Pemerintah Daerah Kabupaten Bangka.\n\nGaris Kemiskinan (GK) pada Semester I 2024 tercatat sebesar Rp 612.450 per kapita/bulan, didominasi oleh pengeluaran makanan sebesar 73,4 persen. BPS menggarisbawahi pentingnya menjaga stabilitas harga sembako dan memperluas kesempatan kerja sektor informal untuk mempertahankan tren positif ini.",
                 'kategori' => 'Rilis Data',
-                'waktu_baca' => '3 Menit Baca',
                 'sumber' => 'BPS Kabupaten Bangka & Diskominfo',
                 'is_headline' => true,
                 'tags' => ['Kemiskinan', 'Rilis Resmi', 'Bansos', 'Ekonomi Rakyat'],
@@ -43,7 +42,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Pemerintah Kabupaten Bangka melalui Dinas Komunikasi, Informatika dan Statistik menghelat bimtek standardisasi metadata statistik sektoral bersama 28 Organisasi Perangkat Daerah.',
                 'isi' => "Dinas Kominfotik Kabupaten Bangka menyelenggarakan bimbingan teknis implementasi Perpres No. 39 Tahun 2019 tentang Satu Data Indonesia. Kegiatan ini menghadirkan BPS Kabupaten Bangka sebagai Pembina Data Statistik dan Bappeda Litbang sebagai Koordinator Forum Satu Data.\n\nDalam forum ini ditegaskan komitmen seluruh Organisasi Perangkat Daerah (OPD) selaku Produsen Data untuk menyusun Standar Data, Metadata Statistik Sektoral (MS-Kegiatan, MS-Variabel, MS-Indikator), serta interoperabilitas data melalui portal portal satudata.bangka.go.id.\n\nDengan adanya standardisasi ini, seluruh data sektoral yang dipublikasikan dijamin memenuhi kaidah validitas, akurasi, dan ketertelusuran yang dapat diandalkan oleh perencana kebijakan maupun masyarakat.",
                 'kategori' => 'Kegiatan',
-                'waktu_baca' => '4 Menit Baca',
                 'sumber' => 'Dinkominfotik Kab. Bangka',
                 'is_headline' => false,
                 'tags' => ['Satu Data', 'Metadata', 'Bimtek OPD', 'SDI'],
@@ -56,7 +54,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Buku kompendium data paling komprehensif memuat 450+ tabel indikator strategis sosial, demografi, dan ekonomi di 8 kecamatan kini tersedia lengkap dalam format digital interaktif.',
                 'isi' => "Buku publikasi induk tahunan 'Kabupaten Bangka Dalam Angka 2024' telah terbit dan dapat diunduh bebas oleh publik. Publikasi ini menyajikan rangkuman data agregat tahun 2023 hingga kuartal pertama 2024.\n\nCakupan publikasi meliputi geografi dan iklim, kependudukan dan ketenagakerjaan, sosial dan kesejahteraan rakyat, pertanian, pertambangan, industri pengolahan, perdagangan, serta keuangan daerah di 8 kecamatan: Sungailiat, Belinyu, Merawang, Mendo Barat, Pemali, Bakam, Riau Silip, dan Puding Besar.\n\nKepala BPS Kabupaten Bangka menyampaikan apresiasi kepada seluruh instansi dinas yang telah berkolaborasi aktif dalam penyusunan publikasi komprehensif ini.",
                 'kategori' => 'Publikasi',
-                'waktu_baca' => '5 Menit Baca',
                 'sumber' => 'BPS Kabupaten Bangka',
                 'is_headline' => false,
                 'tags' => ['Buku Publikasi', 'Bangka Dalam Angka', 'Tabel Data'],
@@ -69,7 +66,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'PDRB Kabupaten Bangka tumbuh 4,12 persen (y-on-y). Sektor pertanian, perkebunan kelapa sawit, dan hilirisasi CPO menjadi motor utama penggerak pertumbuhan ekonomi daerah.',
                 'isi' => "Pertumbuhan ekonomi Kabupaten Bangka pada triwulan II-2024 menunjukkan ketahanan positif di tengah fluktuasi harga komoditas timah global. Sektor Pertanian, Kehutanan, dan Perikanan menyumbang kontribusi terbesar terhadap pembentukan PDRB sebesar 21,8 persen.\n\nKenaikan produksi kelapa sawit rakyat dan peningkatan kapasitas pabrik pengolahan CPO di wilayah Belinyu dan Mendo Barat memberikan efek pengganda (multiplier effect) yang nyata terhadap penyerapan tenaga kerja lokal dan pendapatan rumah tangga perdesaan.",
                 'kategori' => 'Rilis Data',
-                'waktu_baca' => '3 Menit Baca',
                 'sumber' => 'Tim Neraca Wilayah BPS',
                 'is_headline' => false,
                 'tags' => ['PDRB', 'Pertumbuhan Ekonomi', 'Pertanian', 'Sawit'],
@@ -82,7 +78,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Petugas statistik BPS turun serentak mendata sampel rumah tangga di 8 kecamatan guna mengukur Tingkat Pengangguran Terbuka (TPT) dan pergeseran struktur ketenagakerjaan.',
                 'isi' => "Survei Angkatan Kerja Nasional (Sakernas) periode Agustus 2024 dilaksanakan serentak oleh BPS Kabupaten Bangka dengan menerapkan metode Computer-Assisted Personal Interviewing (CAPI) berbasis gawai pintar.\n\nSurvei ini bertujuan untuk menangkap dinamika ketenagakerjaan terkini, mencakup Tingkat Partisipasi Angkatan Kerja (TPAK), pengangguran terdidik, serta pertumbuhan pekerja di sektor informal dan ekonomi digital.",
                 'kategori' => 'Kegiatan',
-                'waktu_baca' => '3 Menit Baca',
                 'sumber' => 'BPS Kabupaten Bangka',
                 'is_headline' => false,
                 'tags' => ['Ketenagakerjaan', 'Sakernas', 'TPT', 'Survei'],
@@ -95,7 +90,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Tim Pengendalian Inflasi Daerah (TPID) Bangka memperkuat monitoring pasokan cabai, beras, dan daging ayam antarpulau guna mencegah lonjakan indeks harga konsumen.',
                 'isi' => "Pemerintah Daerah bersama BPS dan instansi vertikal menggelar evaluasi mingguan Tim Pengendalian Inflasi Daerah (TPID). Berdasarkan pantauan Sistem Pemantauan Pasar dan Kebutuhan Pokok (SP2KP), indeks perkembangan harga (IPH) di Kabupaten Bangka berada dalam batas aman terkendali di angka 2,1 persen.\n\nLangkah konkret yang terus dijalankan meliputi operasi pasar murah di kecamatan prioritas, subsidi ongkos angkut komoditas holtikultura, dan penguatan pasokan melalui kerjasama antardaerah (KAD).",
                 'kategori' => 'Kegiatan',
-                'waktu_baca' => '4 Menit Baca',
                 'sumber' => 'TPID Kabupaten Bangka',
                 'is_headline' => false,
                 'tags' => ['Inflasi', 'TPID', 'Pangan', 'Pasar Murah'],
@@ -157,7 +151,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Kajian mendalam mengenai evolusi lanskap ekonomi Kabupaten Bangka selama satu dekade terakhir, mengupas tantangan pasca-tambang dan peluang diversifikasi komoditas perkebunan.',
                 'penulis' => 'Dr. Hendra Wijaya, M.Si (Tim Analisis Data SDI Bangka)',
                 'kategori' => 'Ekonomi',
-                'waktu_baca' => '6 Menit Baca',
                 'views' => 1420,
                 'poin_kunci' => [
                     'Pangsa sektor pertambangan turun dari 24,1% (2014) menjadi 13,2% (2024).',
@@ -174,7 +167,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Analisis komparatif komponen IPM di 8 kecamatan Kabupaten Bangka mengungkapkan kesenjangan antara Sungailiat sebagai pusat perkotaan dengan kecamatan pedalaman seperti Bakam dan Riau Silip.',
                 'penulis' => 'Tim Neraca Sosial BPS Kabupaten Bangka',
                 'kategori' => 'Sosial',
-                'waktu_baca' => '5 Menit Baca',
                 'views' => 980,
                 'poin_kunci' => [
                     'IPM Kabupaten Bangka mencapai 73,42 (kategori Tinggi), namun disparitas antar-kecamatan mencapai rentang 6,8 poin.',
@@ -191,7 +183,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Dengan 68,4 persen penduduk berada pada usia produktif (15–64 tahun), Kabupaten Bangka memasuki jendela peluang bonus demografi yang menuntut penciptaan lapangan kerja bermutu.',
                 'penulis' => 'Dra. Ratna Sari (Analis Kependudukan Bappeda Bangka)',
                 'kategori' => 'Kependudukan',
-                'waktu_baca' => '5 Menit Baca',
                 'views' => 840,
                 'poin_kunci' => [
                     'Rasio ketergantungan (dependency ratio) mencapai titik terendah sebesar 46,2 per 100 penduduk usia produktif.',
@@ -208,7 +199,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Ketergantungan terhadap pasokan pangan dari luar Pulau Bangka menjadikan inflasi lokal sensitif terhadap cuaca laut dan tarif angkutan penyeberangan kapal roro.',
                 'penulis' => 'Tim Pengkaji Ekonomi SDI Bangka',
                 'kategori' => 'Ekonomi',
-                'waktu_baca' => '4 Menit Baca',
                 'views' => 715,
                 'poin_kunci' => [
                     'Komoditas cabai merah, bawang merah, dan daging ayam ras berkontribusi hingga 58% terhadap volatilitas inflasi tahunan.',
@@ -225,7 +215,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Kajian spasial mengenai risiko penyusutan sawah irigasi teknis akibat ekspansi perkebunan dan permukiman di koridor Merawang-Sungailiat.',
                 'penulis' => 'Ir. M. Ridwan (Ahli Tata Ruang Wilayah)',
                 'kategori' => 'Pertanian',
-                'waktu_baca' => '5 Menit Baca',
                 'views' => 620,
                 'poin_kunci' => [
                     'Luas baku sawah beririgasi teknis di Kabupaten Bangka saat ini tercatat seluas 2.840 hektar.',
@@ -242,7 +231,6 @@ class PublikasiController extends Controller
                 'ringkasan' => 'Mengevaluasi efektivitas keterpaduan intervensi perlindungan sosial, peningkatan pendapatan, dan pengurangan kantong kemiskinan di 15 desa prioritas.',
                 'penulis' => 'Dinas Sosial & Tim Koordinasi Penanggulangan Kemiskinan',
                 'kategori' => 'Sosial',
-                'waktu_baca' => '6 Menit Baca',
                 'views' => 890,
                 'poin_kunci' => [
                     'Tingkat kemiskinan ekstrem di Kabupaten Bangka berhasil ditekan hingga mendekati 0,18 persen.',

@@ -24,10 +24,6 @@
                         <div class="artikel-meta-tags">
                             <span class="pub-badge pub-badge-blue">{{ $article['kategori'] }}</span>
                             <span class="artikel-hero-pill">
-                                <i data-lucide="clock" class="icon-xs"></i>
-                                <span>{{ $article['waktu_baca'] }}</span>
-                            </span>
-                            <span class="artikel-hero-pill">
                                 <i data-lucide="calendar" class="icon-xs"></i>
                                 <span>{{ $article['tanggal'] }}</span>
                             </span>
@@ -143,10 +139,6 @@
                                 <div class="sidebar-meta-row">
                                     <span class="sidebar-meta-label">Diterbitkan</span>
                                     <span class="sidebar-meta-val">{{ $article['tanggal'] }}</span>
-                                </div>
-                                <div class="sidebar-meta-row">
-                                    <span class="sidebar-meta-label">Estimasi Baca</span>
-                                    <span class="sidebar-meta-val">{{ $article['waktu_baca'] }}</span>
                                 </div>
                                 <div class="sidebar-meta-row">
                                     <span class="sidebar-meta-label">Penulis / Unit</span>

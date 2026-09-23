@@ -85,10 +85,6 @@
                                 <div class="pub-card-meta-top">
                                     <div class="pub-card-meta">
                                         <span class="pub-badge pub-badge-blue">{{ $item['kategori'] }}</span>
-                                        <span class="pub-readtime">
-                                            <i data-lucide="clock" class="icon-xs"></i>
-                                            {{ $item['waktu_baca'] }}
-                                        </span>
                                     </div>
 
                                     <!-- Tombol Bookmark Cepat -->
@@ -159,7 +155,6 @@
             <div class="pub-modal-header">
                 <div class="pub-modal-meta">
                     <span class="pub-badge pub-badge-blue" id="modal-article-category">Kategori</span>
-                    <span class="pub-readtime" id="modal-article-readtime">Waktu Baca</span>
                     <span class="pub-date" id="modal-article-date">Tanggal</span>
                 </div>
                 <button type="button" class="pub-modal-close" id="btn-close-article-modal" aria-label="Tutup modal">

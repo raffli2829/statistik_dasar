@@ -245,7 +245,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('modal-news-category').textContent = item.kategori;
             document.getElementById('modal-news-date').textContent = item.tanggal;
-            document.getElementById('modal-news-readtime').textContent = item.waktu_baca || '3 Menit Baca';
             document.getElementById('modal-news-title').textContent = item.judul;
             document.getElementById('modal-news-source').textContent = `Sumber: ${item.sumber}`;
 
@@ -498,7 +497,6 @@ document.addEventListener('DOMContentLoaded', () => {
             currentModalArticle = item;
 
             document.getElementById('modal-article-category').textContent = item.kategori;
-            document.getElementById('modal-article-readtime').textContent = item.waktu_baca || '5 Menit Baca';
             document.getElementById('modal-article-date').textContent = item.tanggal;
             document.getElementById('modal-article-title').textContent = item.judul;
             document.getElementById('modal-article-author').textContent = item.penulis;

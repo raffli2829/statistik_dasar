@@ -2342,8 +2342,7 @@ body {
     border: 1px solid var(--border);
 }
 
-.pub-date,
-.pub-readtime {
+.pub-date {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
@@ -2725,23 +2724,6 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.dataset-formats {
-    display: flex;
-    gap: 0.25rem;
-    flex-shrink: 0;
-}
-
-.badge-fmt {
-    font-size: 0.62rem;
-    font-weight: 800;
-    padding: 0.1rem 0.35rem;
-    border-radius: var(--radius-sm);
-    background: var(--bg-muted);
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-    font-family: var(--font-mono);
 }
 
 /* Sektor Kabupaten Accordion & Table */
@@ -4266,5 +4248,3 @@ body {
         color: #000 !important;
     }
 }
-
-

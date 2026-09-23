@@ -169,11 +169,6 @@
                                 @foreach(array_slice($item['datasets'], 0, 2) as $ds)
                                 <li class="dataset-mini-item">
                                     <span class="dataset-name">{{ $ds['judul'] }}</span>
-                                    <div class="dataset-formats">
-                                        @foreach($ds['format'] as $fmt)
-                                        <span class="badge-fmt">{{ $fmt }}</span>
-                                        @endforeach
-                                    </div>
                                 </li>
                                 @endforeach
                             </ul>
