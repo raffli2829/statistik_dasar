@@ -82,13 +82,13 @@
             <!-- 2. Kontrol Filter & Pencarian OPD -->
             <div class="pub-controls-bar">
                 <div class="pub-filter-pills" id="opd-filter-pills" role="tablist">
-                    @foreach($klasterList as $klaster)
+                    @foreach($klasterList ?? [] as $klaster)
                     <button type="button" 
                             class="pub-pill-btn {{ $loop->first ? 'active' : '' }}" 
-                            data-filter="{{ $klaster }}"
+                            data-filter="{{ $klaster ?? 'Semua' }}"
                             role="tab"
                             aria-selected="{{ $loop->first ? 'true' : 'false' }}">
-                        {{ $klaster }}
+                        {{ $klaster ?? 'Semua' }}
                     </button>
                     @endforeach
                 </div>
@@ -110,46 +110,46 @@
 
             <!-- Counter Info -->
             <div class="pub-result-meta">
-                <span id="opd-count-text">Menampilkan {{ count($items) }} OPD produsen data</span>
+                <span id="opd-count-text">Menampilkan {{ count($items ?? []) }} OPD produsen data</span>
             </div>
 
             <!-- 3. Grid Direktori OPD (2 Kolom) -->
             <div class="pub-grid pub-grid-2" id="opd-grid-container">
-                @foreach($items as $item)
+                @forelse($items ?? [] as $item)
                 <article class="pub-card pub-card-opd opd-item-card" 
-                         data-cluster="{{ $item['klaster'] }}"
-                         data-name="{{ strtolower($item['nama']) }}"
-                         data-acronym="{{ strtolower($item['akronim']) }}"
-                         data-desc="{{ strtolower($item['deskripsi']) }}"
-                         data-id="{{ $item['id'] }}">
+                         data-cluster="{{ $item['klaster'] ?? 'Umum' }}"
+                         data-name="{{ strtolower((string) ($item['nama'] ?? '')) }}"
+                         data-acronym="{{ strtolower((string) ($item['akronim'] ?? '')) }}"
+                         data-desc="{{ strtolower((string) ($item['deskripsi'] ?? '')) }}"
+                         data-id="{{ $item['id'] ?? '' }}">
                     <div class="pub-card-body">
                         <!-- Header OPD -->
                         <div class="pub-opd-header">
-                            <div class="pub-opd-icon" style="background: {{ $item['warna'] }}18; color: {{ $item['warna'] }};">
-                                <i data-lucide="{{ $item['ikon'] }}" class="icon-md"></i>
+                            <div class="pub-opd-icon" style="background: {{ $item['warna'] ?? '#3B82F6' }}18; color: {{ $item['warna'] ?? '#3B82F6' }};">
+                                <i data-lucide="{{ $item['ikon'] ?? 'building-2' }}" class="icon-md"></i>
                             </div>
                             <div class="pub-opd-info">
                                 <div class="pub-opd-meta-row">
-                                    <span class="pub-badge" style="background: {{ $item['warna'] }}18; color: {{ $item['warna'] }};">
-                                        {{ $item['klaster'] }}
+                                    <span class="pub-badge" style="background: {{ $item['warna'] ?? '#3B82F6' }}18; color: {{ $item['warna'] ?? '#3B82F6' }};">
+                                        {{ $item['klaster'] ?? 'Umum' }}
                                     </span>
-                                    <span class="pub-badge-neutral">{{ $item['akronim'] }}</span>
+                                    <span class="pub-badge-neutral">{{ $item['akronim'] ?? 'OPD' }}</span>
                                 </div>
-                                <h2 class="pub-card-title">{{ $item['nama'] }}</h2>
+                                <h2 class="pub-card-title">{{ $item['nama'] ?? 'Nama OPD belum tersedia' }}</h2>
                             </div>
                         </div>
 
-                        <p class="pub-card-excerpt">{{ $item['deskripsi'] }}</p>
+                        <p class="pub-card-excerpt">{{ $item['deskripsi'] ?? 'Deskripsi OPD belum tersedia.' }}</p>
 
                         <!-- Address Info -->
                         <div class="pub-opd-meta-details">
                             <div class="opd-detail-item">
                                 <i data-lucide="map-pin" class="icon-xs text-muted"></i>
-                                <span>{{ $item['alamat'] }}</span>
+                                <span>{{ $item['alamat'] ?? 'Alamat belum tersedia' }}</span>
                             </div>
                             <div class="opd-detail-item">
                                 <i data-lucide="clock" class="icon-xs text-muted"></i>
-                                <span>Pembaruan: {{ $item['terakhir_update'] }}</span>
+                                <span>Pembaruan: {{ $item['terakhir_update'] ?? 'Belum tersedia' }}</span>
                             </div>
                         </div>
 
@@ -162,14 +162,14 @@
                                 </span>
                                 <span class="pub-dataset-count">
                                     <i data-lucide="database" class="icon-xs"></i>
-                                    {{ $item['jumlah_dataset'] }} Total Dataset
+                                    {{ $item['jumlah_dataset'] ?? 0 }} Total Dataset
                                 </span>
                             </div>
 
                             <ul class="datasets-mini-list">
-                                @foreach(array_slice($item['datasets'], 0, 2) as $ds)
+                                @foreach(array_slice($item['datasets'] ?? [], 0, 2) as $ds)
                                 <li class="dataset-mini-item">
-                                    <span class="dataset-name">{{ $ds['judul'] }}</span>
+                                    <span class="dataset-name">{{ $ds['judul'] ?? 'Dataset belum tersedia' }}</span>
                                 </li>
                                 @endforeach
                             </ul>
@@ -179,14 +179,22 @@
                         <div class="pub-card-footer">
                             <button type="button" 
                                     class="btn-primary-pub w-full btn-open-opd-catalog" 
-                                    data-opd-id="{{ $item['id'] }}">
+                                    data-opd-id="{{ $item['id'] ?? '' }}">
                                 <i data-lucide="folder-open" class="icon-xs"></i>
-                                <span>Buka Katalog Dataset ({{ count($item['datasets']) }}+ Data)</span>
+                                <span>Buka Katalog Dataset ({{ count($item['datasets'] ?? []) }}+ Data)</span>
                             </button>
                         </div>
                     </div>
                 </article>
-                @endforeach
+                @empty
+                <div class="pub-empty-state" style="display: block;">
+                    <div class="empty-icon-wrap">
+                        <i data-lucide="building-2" class="icon-lg"></i>
+                    </div>
+                    <h3>Belum ada data OPD</h3>
+                    <p>Data OPD sedang disiapkan untuk ditampilkan.</p>
+                </div>
+                @endforelse
             </div>
 
             <!-- Empty State bila pencarian nihil -->
