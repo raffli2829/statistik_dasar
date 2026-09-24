@@ -27,3 +27,5 @@ Homestead.yaml
 Thumbs.db
 *.zip
 database/database.sqlite
+/bootstrap/cache/*.php
+!/bootstrap/cache/.gitignore
