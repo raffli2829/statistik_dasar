@@ -1,3 +1,4 @@
+
 @extends('layouts.app')
 
 @section('title', 'Statistik Sektoral OPD - Satu Data Kabupaten Bangka')
